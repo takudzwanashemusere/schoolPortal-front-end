@@ -15,3 +15,8 @@ A few resources to get you started if this is your first Flutter project:
 For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
+
+
+every student is given a unique Id  so that when you access your portal you enter student Id number and a password to access the  website
+
+the admin panel  has all number of students  at the school and all classess , so  when teachers accesses certain class which they want  to eneter the marks  all the students inthe class appeears 
