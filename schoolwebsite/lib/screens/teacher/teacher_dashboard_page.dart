@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:schoolwebsite/app_theme.dart';
-import 'package:schoolwebsite/data/mock_data.dart';
 import 'package:schoolwebsite/models/models.dart';
 import 'package:schoolwebsite/state/app_state_provider.dart';
 import 'package:schoolwebsite/widgets/stat_card.dart';
@@ -13,16 +12,16 @@ class TeacherDashboardPage extends StatelessWidget {
     final state = AppStateProvider.of(context);
     final teacherId = state.currentUser?.linkedId ?? '';
 
-    final teacher = mockTeachers.firstWhere(
+    final teacher = state.teachers.firstWhere(
       (t) => t.id == teacherId,
       orElse: () =>
           const Teacher(id: '', name: '', subjectIds: [], classIds: []),
     );
 
-    final subjects = mockSubjects
+    final subjects = state.subjects
         .where((s) => teacher.subjectIds.contains(s.id))
         .toList();
-    final classes = mockClasses
+    final classes = state.classes
         .where((c) => teacher.classIds.contains(c.id))
         .toList();
 

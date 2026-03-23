@@ -1,70 +1,52 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from motor.motor_asyncio import AsyncIOMotorDatabase
 
 from database import get_db
 from dependencies import require_admin_or_teacher
 from schemas import MarkUpsertRequest, MarkResponse, mark_to_response
-import models
 
 router = APIRouter()
 
 
 @router.get("/", response_model=list[MarkResponse])
-def list_marks(
+async def list_marks(
     student_id: str | None = None,
     subject_id: str | None = None,
     class_id: str | None = None,
-    db: Session = Depends(get_db),
+    db: AsyncIOMotorDatabase = Depends(get_db),
     _user=Depends(require_admin_or_teacher),
 ):
-    query = db.query(models.Mark)
+    filt = {}
     if student_id:
-        query = query.filter(models.Mark.student_id == student_id)
+        filt["student_id"] = student_id
     if subject_id:
-        query = query.filter(models.Mark.subject_id == subject_id)
+        filt["subject_id"] = subject_id
     if class_id:
-        query = query.filter(models.Mark.class_id == class_id)
-    return [mark_to_response(m) for m in query.all()]
+        filt["class_id"] = class_id
+    docs = await db["marks"].find(filt).to_list(None)
+    return [mark_to_response(m) for m in docs]
 
 
 @router.post("/", response_model=MarkResponse)
-def upsert_mark(
+async def upsert_mark(
     body: MarkUpsertRequest,
-    db: Session = Depends(get_db),
+    db: AsyncIOMotorDatabase = Depends(get_db),
     _user=Depends(require_admin_or_teacher),
 ):
-    # Validate that student, subject, and class exist
-    if not db.query(models.Student).filter_by(id=body.student_id).first():
+    if not await db["students"].find_one({"_id": body.student_id}):
         raise HTTPException(status_code=404, detail="Student not found")
-    if not db.query(models.Subject).filter_by(id=body.subject_id).first():
+    if not await db["subjects"].find_one({"_id": body.subject_id}):
         raise HTTPException(status_code=404, detail="Subject not found")
-    if not db.query(models.ClassGroup).filter_by(id=body.class_id).first():
+    if not await db["classes"].find_one({"_id": body.class_id}):
         raise HTTPException(status_code=404, detail="Class not found")
 
-    existing = (
-        db.query(models.Mark)
-        .filter_by(
-            student_id=body.student_id,
-            subject_id=body.subject_id,
-            class_id=body.class_id,
-        )
-        .first()
-    )
-    if existing:
-        existing.test_mark = body.test_mark
-        existing.exam_mark = body.exam_mark
-        db.commit()
-        db.refresh(existing)
-        return mark_to_response(existing)
-    else:
-        mark = models.Mark(
-            student_id=body.student_id,
-            subject_id=body.subject_id,
-            class_id=body.class_id,
-            test_mark=body.test_mark,
-            exam_mark=body.exam_mark,
-        )
-        db.add(mark)
-        db.commit()
-        db.refresh(mark)
-        return mark_to_response(mark)
+    filt = {
+        "student_id": body.student_id,
+        "subject_id": body.subject_id,
+        "class_id":   body.class_id,
+    }
+    update = {"$set": {"test_mark": body.test_mark, "exam_mark": body.exam_mark}}
+    await db["marks"].update_one(filt, update, upsert=True)
+
+    doc = await db["marks"].find_one(filt)
+    return mark_to_response(doc)

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:schoolwebsite/app_theme.dart';
-import 'package:schoolwebsite/data/mock_data.dart';
 import 'package:schoolwebsite/state/app_state_provider.dart';
 import 'package:schoolwebsite/widgets/stat_card.dart';
 
@@ -13,7 +12,7 @@ class AdminAnalyticsPage extends StatelessWidget {
     final topTeacherId = state.getHighestPerformingTeacherId();
 
     // Compute pass rates for all teachers
-    final rateData = mockTeachers.map((t) {
+    final rateData = state.teachers.map((t) {
       return (teacher: t, rate: state.getPassRate(t.id));
     }).toList();
 
@@ -55,9 +54,9 @@ class AdminAnalyticsPage extends StatelessWidget {
               Expanded(
                 child: StatCard(
                   label: 'Teachers Submitted',
-                  value: '${submitted.length} / ${mockTeachers.length}',
+                  value: '${submitted.length} / ${state.teachers.length}',
                   subtitle: 'Data completeness',
-                  accentColor: submitted.length == mockTeachers.length
+                  accentColor: submitted.length == state.teachers.length
                       ? AppTheme.success
                       : AppTheme.warning,
                 ),
@@ -67,7 +66,7 @@ class AdminAnalyticsPage extends StatelessWidget {
                 child: StatCard(
                   label: 'Top Performer',
                   value: topTeacherId != null
-                      ? mockTeachers
+                      ? state.teachers
                           .firstWhere((t) => t.id == topTeacherId)
                           .name
                           .split(' ')
@@ -219,7 +218,7 @@ class AdminAnalyticsPage extends StatelessWidget {
             rows: rateData.map((data) {
               final hasData = data.rate >= 0;
               final isTop = data.teacher.id == topTeacherId;
-              final subjects = mockSubjects
+              final subjects = state.subjects
                   .where((s) => data.teacher.subjectIds.contains(s.id))
                   .map((s) => s.name)
                   .join(', ');

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:schoolwebsite/app_theme.dart';
-import 'package:schoolwebsite/data/mock_data.dart';
 import 'package:schoolwebsite/models/models.dart';
 import 'package:schoolwebsite/state/app_state_provider.dart';
 import 'package:schoolwebsite/widgets/stat_card.dart';
@@ -27,9 +26,9 @@ class _TeacherMarksEntryPageState extends State<TeacherMarksEntryPage> {
         const Teacher(id: '', name: '', subjectIds: [], classIds: []);
 
     final teacherClasses =
-        mockClasses.where((c) => teacher.classIds.contains(c.id)).toList();
+        state.classes.where((c) => teacher.classIds.contains(c.id)).toList();
     final teacherSubjects =
-        mockSubjects.where((s) => teacher.subjectIds.contains(s.id)).toList();
+        state.subjects.where((s) => teacher.subjectIds.contains(s.id)).toList();
 
     final canShowTable =
         _selectedClassId != null && _selectedSubjectId != null;
@@ -418,10 +417,11 @@ class _MarksTableState extends State<_MarksTable> {
 
   @override
   Widget build(BuildContext context) {
+    final state = AppStateProvider.read(context);
     final className =
-        mockClasses.firstWhere((c) => c.id == widget.classId).name;
+        state.classes.firstWhere((c) => c.id == widget.classId).name;
     final subjectName =
-        mockSubjects.firstWhere((s) => s.id == widget.subjectId).name;
+        state.subjects.firstWhere((s) => s.id == widget.subjectId).name;
 
     if (_students.isEmpty) {
       return Container(

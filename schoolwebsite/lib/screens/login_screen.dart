@@ -13,13 +13,19 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   UserRole _selectedRole = UserRole.admin;
+
+  // Used for Admin and Student roles (dropdown)
   String? _selectedUserId;
+
+  // Used for Teacher role (manual User ID entry)
+  final _userIdController = TextEditingController();
   final _passwordController = TextEditingController();
   String? _errorMessage;
   bool _obscurePassword = true;
 
   @override
   void dispose() {
+    _userIdController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -31,25 +37,38 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() {
       _selectedRole = role;
       _selectedUserId = null;
+      _userIdController.clear();
       _errorMessage = null;
       _passwordController.clear();
     });
   }
 
   void _login() {
-    if (_selectedUserId == null) {
-      setState(() => _errorMessage = 'Please select a user.');
-      return;
-    }
     final password = _passwordController.text.trim();
     if (password.isEmpty) {
       setState(() => _errorMessage = 'Please enter your password.');
       return;
     }
+
+    String? userId;
+    if (_selectedRole == UserRole.teacher) {
+      userId = _userIdController.text.trim();
+      if (userId.isEmpty) {
+        setState(() => _errorMessage = 'Please enter your User ID.');
+        return;
+      }
+    } else {
+      userId = _selectedUserId;
+      if (userId == null) {
+        setState(() => _errorMessage = 'Please select a user.');
+        return;
+      }
+    }
+
     final state = AppStateProvider.read(context);
-    final success = state.login(_selectedUserId!, password);
+    final success = state.login(userId, password);
     if (!success) {
-      setState(() => _errorMessage = 'Incorrect password. Please try again.');
+      setState(() => _errorMessage = 'Incorrect User ID or password.');
     }
   }
 
@@ -110,12 +129,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 48),
                   _FeatureItem(
                     title: 'Administrator',
-                    description: 'Oversee all academic data, analytics, and reports.',
+                    description:
+                        'Oversee all academic data, analytics, and reports.',
                   ),
                   const SizedBox(height: 20),
                   _FeatureItem(
                     title: 'Teachers',
-                    description: 'Enter and manage student marks by class and subject.',
+                    description:
+                        'Log in with your User ID and password to manage marks.',
                   ),
                   const SizedBox(height: 20),
                   _FeatureItem(
@@ -138,13 +159,12 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const Text(
-                        'Sign In',
-                        style: AppTheme.heading1,
-                      ),
+                      const Text('Sign In', style: AppTheme.heading1),
                       const SizedBox(height: 6),
-                      const Text(
-                        'Select your role and enter your credentials.',
+                      Text(
+                        _selectedRole == UserRole.teacher
+                            ? 'Enter your User ID and password to continue.'
+                            : 'Select your role and enter your credentials.',
                         style: AppTheme.label,
                       ),
                       const SizedBox(height: 28),
@@ -158,50 +178,85 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 20),
 
-                      // ── User selector ──────────────────────────────────────
-                      const Text('User Account', style: AppTheme.heading3),
-                      const SizedBox(height: 8),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: AppTheme.surface,
-                          borderRadius: BorderRadius.circular(6),
-                          border: const Border.fromBorderSide(
-                              BorderSide(color: AppTheme.border)),
+                      // ── User selector / User ID field ──────────────────────
+                      if (_selectedRole == UserRole.teacher) ...[
+                        const Text('User ID', style: AppTheme.heading3),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: _userIdController,
+                          style: const TextStyle(fontSize: 14),
+                          decoration: const InputDecoration(
+                            hintText: 'Enter your assigned User ID',
+                            prefixIcon: Icon(Icons.badge_outlined, size: 18),
+                          ),
+                          onChanged: (_) =>
+                              setState(() => _errorMessage = null),
+                          onSubmitted: (_) => _login(),
                         ),
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            value: _selectedUserId,
-                            isExpanded: true,
-                            hint: const Text(
-                              'Select an account',
-                              style: TextStyle(
-                                color: AppTheme.textSecondary,
-                                fontSize: 13,
-                              ),
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 7),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF0F9FF),
+                            borderRadius: BorderRadius.circular(4),
+                            border: const Border.fromBorderSide(
+                                BorderSide(color: Color(0xFFBAE6FD))),
+                          ),
+                          child: const Text(
+                            'Demo User IDs: u1, u2, u3, u4',
+                            style: TextStyle(
+                              color: Color(0xFF0369A1),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
                             ),
-                            items: _usersForRole
-                                .map(
-                                  (u) => DropdownMenuItem<String>(
-                                    value: u.id,
-                                    child: Text(
-                                      u.name,
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        color: AppTheme.textPrimary,
-                                      ),
-                                    ),
-                                  ),
-                                )
-                                .toList(),
-                            onChanged: (v) =>
-                                setState(() {
-                                  _selectedUserId = v;
-                                  _errorMessage = null;
-                                }),
                           ),
                         ),
-                      ),
+                      ] else ...[
+                        const Text('User Account', style: AppTheme.heading3),
+                        const SizedBox(height: 8),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: AppTheme.surface,
+                            borderRadius: BorderRadius.circular(6),
+                            border: const Border.fromBorderSide(
+                                BorderSide(color: AppTheme.border)),
+                          ),
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: 12),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              value: _selectedUserId,
+                              isExpanded: true,
+                              hint: const Text(
+                                'Select an account',
+                                style: TextStyle(
+                                  color: AppTheme.textSecondary,
+                                  fontSize: 13,
+                                ),
+                              ),
+                              items: _usersForRole
+                                  .map(
+                                    (u) => DropdownMenuItem<String>(
+                                      value: u.id,
+                                      child: Text(
+                                        u.name,
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          color: AppTheme.textPrimary,
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                  .toList(),
+                              onChanged: (v) => setState(() {
+                                _selectedUserId = v;
+                                _errorMessage = null;
+                              }),
+                            ),
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 20),
 
                       // ── Password ───────────────────────────────────────────
@@ -315,14 +370,16 @@ class _RoleSelector extends StatelessWidget {
             onTap: () => onChanged(role),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 150),
-              margin: EdgeInsets.only(right: role != UserRole.student ? 8 : 0),
+              margin:
+                  EdgeInsets.only(right: role != UserRole.student ? 8 : 0),
               padding: const EdgeInsets.symmetric(vertical: 10),
               decoration: BoxDecoration(
                 color: isSelected ? AppTheme.primary : AppTheme.surface,
                 borderRadius: BorderRadius.circular(6),
                 border: Border.fromBorderSide(
                   BorderSide(
-                    color: isSelected ? AppTheme.primary : AppTheme.border,
+                    color:
+                        isSelected ? AppTheme.primary : AppTheme.border,
                     width: isSelected ? 1.5 : 1,
                   ),
                 ),

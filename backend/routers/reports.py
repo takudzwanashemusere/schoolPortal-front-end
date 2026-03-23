@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from motor.motor_asyncio import AsyncIOMotorDatabase
 
 from database import get_db
 from dependencies import require_admin, require_admin_or_teacher
@@ -9,147 +9,132 @@ from schemas import (
     StudentResponse, StudentReportRow, StudentMarkEntry,
     calc_final_mark, calc_grade,
 )
-import models
 
 router = APIRouter()
 
 
 @router.get("/headmaster", response_model=HeadmasterReportResponse)
-def get_headmaster_report(
-    db: Session = Depends(get_db),
+async def get_headmaster_report(
+    db: AsyncIOMotorDatabase = Depends(get_db),
     _user=Depends(require_admin),
 ):
-    report = db.query(models.HeadmasterReport).filter_by(id=1).first()
-    if report is None:
+    doc = await db["headmaster_report"].find_one({"_id": "singleton"})
+    if doc is None:
         raise HTTPException(status_code=404, detail="Report config not found")
-    return report
+    return HeadmasterReportResponse(comment=doc["comment"], signature=doc["signature"])
 
 
 @router.put("/headmaster", response_model=HeadmasterReportResponse)
-def update_headmaster_report(
+async def update_headmaster_report(
     body: HeadmasterReportUpdateRequest,
-    db: Session = Depends(get_db),
+    db: AsyncIOMotorDatabase = Depends(get_db),
     _user=Depends(require_admin),
 ):
-    report = db.query(models.HeadmasterReport).filter_by(id=1).first()
-    if report is None:
-        raise HTTPException(status_code=404, detail="Report config not found")
-    report.comment = body.comment
-    report.signature = body.signature
-    db.commit()
-    db.refresh(report)
-    return report
+    await db["headmaster_report"].update_one(
+        {"_id": "singleton"},
+        {"$set": {"comment": body.comment, "signature": body.signature}},
+    )
+    doc = await db["headmaster_report"].find_one({"_id": "singleton"})
+    return HeadmasterReportResponse(comment=doc["comment"], signature=doc["signature"])
 
 
 @router.get("/class/{class_id}", response_model=ClassReportResponse)
-def get_class_report(
+async def get_class_report(
     class_id: str,
-    db: Session = Depends(get_db),
+    db: AsyncIOMotorDatabase = Depends(get_db),
     _user=Depends(require_admin_or_teacher),
 ):
-    cg = db.query(models.ClassGroup).filter_by(id=class_id).first()
+    cg = await db["classes"].find_one({"_id": class_id})
     if cg is None:
         raise HTTPException(status_code=404, detail="Class not found")
 
-    # Student IDs in this class
-    class_student_rows = db.query(models.ClassStudent).filter_by(class_id=class_id).all()
-    student_ids = [cs.student_id for cs in class_student_rows]
+    student_ids = cg.get("student_ids", [])
+    teacher_ids = cg.get("teacher_ids", [])
 
-    # Teacher IDs for this class
-    teacher_ids = [tc.teacher_id for tc in
-                   db.query(models.TeacherClass).filter_by(class_id=class_id).all()]
-
-    # Subjects taught in this class (subjects belonging to any teacher of this class)
-    subjects = (
-        db.query(models.Subject)
-        .filter(models.Subject.teacher_id.in_(teacher_ids))
-        .all()
-    )
-    subject_ids = [s.id for s in subjects]
+    # Subjects taught in this class
+    subjects_docs = await db["subjects"].find(
+        {"teacher_id": {"$in": teacher_ids}}
+    ).to_list(None)
+    subject_ids = [s["_id"] for s in subjects_docs]
 
     # All marks for this class
-    all_marks = (
-        db.query(models.Mark)
-        .filter(
-            models.Mark.class_id == class_id,
-            models.Mark.student_id.in_(student_ids),
-            models.Mark.subject_id.in_(subject_ids),
-        )
-        .all()
-    )
-    # Index marks by (student_id, subject_id)
-    mark_index: dict[tuple, models.Mark] = {
-        (m.student_id, m.subject_id): m for m in all_marks
-    }
+    marks_docs = await db["marks"].find({
+        "class_id":   class_id,
+        "student_id": {"$in": student_ids},
+        "subject_id": {"$in": subject_ids},
+    }).to_list(None)
+    mark_index = {(m["student_id"], m["subject_id"]): m for m in marks_docs}
 
-    students = db.query(models.Student).filter(models.Student.id.in_(student_ids)).all()
+    students_docs = await db["students"].find(
+        {"_id": {"$in": student_ids}}
+    ).to_list(None)
 
     student_rows: list[StudentReportRow] = []
-    total_finals: list[float] = []
     passing_count = 0
     total_mark_count = 0
 
-    for student in students:
+    for student in students_docs:
         marks_by_subject: dict[str, StudentMarkEntry] = {}
         student_finals: list[float] = []
 
-        for subject in subjects:
-            key = (student.id, subject.id)
-            mark = mark_index.get(key)
+        for subject in subjects_docs:
+            mark = mark_index.get((student["_id"], subject["_id"]))
             if mark:
-                final = calc_final_mark(mark.test_mark, mark.exam_mark)
+                final = calc_final_mark(mark["test_mark"], mark["exam_mark"])
                 grade = calc_grade(final)
                 is_passing = final >= 50
                 entry = StudentMarkEntry(
-                    subject_id=subject.id,
-                    subject_name=subject.name,
-                    test_mark=mark.test_mark,
-                    exam_mark=mark.exam_mark,
+                    subject_id=subject["_id"],
+                    subject_name=subject["name"],
+                    test_mark=mark["test_mark"],
+                    exam_mark=mark["exam_mark"],
                     final_mark=final,
                     grade=grade,
                     is_passing=is_passing,
                 )
                 student_finals.append(final)
-                total_finals.append(final)
                 if is_passing:
                     passing_count += 1
                 total_mark_count += 1
             else:
                 entry = StudentMarkEntry(
-                    subject_id=subject.id,
-                    subject_name=subject.name,
+                    subject_id=subject["_id"],
+                    subject_name=subject["name"],
                 )
-            marks_by_subject[subject.id] = entry
+            marks_by_subject[subject["_id"]] = entry
 
         avg = round(sum(student_finals) / len(student_finals), 1) if student_finals else None
-        overall_grade = calc_grade(avg) if avg is not None else None
-
         student_rows.append(StudentReportRow(
-            student=StudentResponse(id=student.id, name=student.name, class_id=student.class_id),
+            student=StudentResponse(
+                id=student["_id"],
+                name=student["name"],
+                class_id=student["class_id"],
+            ),
             marks_by_subject=marks_by_subject,
             average=avg,
-            overall_grade=overall_grade,
+            overall_grade=calc_grade(avg) if avg is not None else None,
         ))
 
-    # Overall class pass rate
     pass_rate = (
         round((passing_count / total_mark_count) * 100, 1)
         if total_mark_count > 0 else None
     )
 
-    # Headmaster report
-    hm = db.query(models.HeadmasterReport).filter_by(id=1).first()
+    hm = await db["headmaster_report"].find_one({"_id": "singleton"})
 
     return ClassReportResponse(
         class_group=ClassGroupResponse(
-            id=cg.id,
-            name=cg.name,
+            id=cg["_id"],
+            name=cg["name"],
             student_ids=student_ids,
             teacher_ids=teacher_ids,
         ),
-        subjects=[SubjectResponse(id=s.id, name=s.name, teacher_id=s.teacher_id) for s in subjects],
+        subjects=[
+            SubjectResponse(id=s["_id"], name=s["name"], teacher_id=s["teacher_id"])
+            for s in subjects_docs
+        ],
         students=student_rows,
         pass_rate=pass_rate,
-        headmaster_comment=hm.comment if hm else "",
-        headmaster_signature=hm.signature if hm else "",
+        headmaster_comment=hm["comment"] if hm else "",
+        headmaster_signature=hm["signature"] if hm else "",
     )

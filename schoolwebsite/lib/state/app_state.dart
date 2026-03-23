@@ -8,7 +8,9 @@ class AppState extends ChangeNotifier {
   AppUser? get currentUser => _currentUser;
 
   // ─── Mutable data ───────────────────────────────────────────────────────────
+  late List<AppUser> _users;
   late List<Teacher> _teachers;
+  late List<Subject> _subjects;
   late List<Student> _students;
   late List<Mark> _marks;
   late Set<String> _submittedTeacherIds;
@@ -19,10 +21,13 @@ class AppState extends ChangeNotifier {
 
   String get headmasterComment => _headmasterComment;
   String get headmasterSignature => _headmasterSignature;
+  List<AppUser> get users => List.unmodifiable(_users);
   List<Teacher> get teachers => List.unmodifiable(_teachers);
+  List<Subject> get subjects => List.unmodifiable(_subjects);
   List<Student> get students => List.unmodifiable(_students);
   List<Mark> get marks => List.unmodifiable(_marks);
   Set<String> get submittedTeacherIds => Set.unmodifiable(_submittedTeacherIds);
+  List<ClassGroup> get classes => List.unmodifiable(mockClasses);
 
   // ─── Navigation (per role) ──────────────────────────────────────────────────
   int _adminPageIndex = 0;
@@ -34,6 +39,7 @@ class AppState extends ChangeNotifier {
   int get studentPageIndex => _studentPageIndex;
 
   AppState() {
+    _users = List<AppUser>.from(mockUsers);
     _teachers = mockTeachers
         .map((t) => Teacher(
               id: t.id,
@@ -42,6 +48,7 @@ class AppState extends ChangeNotifier {
               classIds: List<String>.from(t.classIds),
             ))
         .toList();
+    _subjects = List<Subject>.from(mockSubjects);
     _students = List<Student>.from(mockStudents);
     _marks = List<Mark>.from(initialMarks);
     _submittedTeacherIds = Set<String>.from(initialSubmittedTeacherIds);
@@ -51,7 +58,7 @@ class AppState extends ChangeNotifier {
 
   bool login(String userId, String password) {
     try {
-      final user = mockUsers.firstWhere((u) => u.id == userId);
+      final user = _users.firstWhere((u) => u.id == userId);
       if (user.password == password) {
         _currentUser = user;
         _adminPageIndex = 0;
@@ -127,6 +134,22 @@ class AppState extends ChangeNotifier {
     }
   }
 
+  /// Returns true on success, false if currentPassword is wrong.
+  bool changePassword(String userId, String currentPassword, String newPassword) {
+    final index = _users.indexWhere((u) => u.id == userId);
+    if (index < 0) return false;
+    if (_users[index].password != currentPassword) return false;
+    _users[index] = AppUser(
+      id: _users[index].id,
+      name: _users[index].name,
+      role: _users[index].role,
+      password: newPassword,
+      linkedId: _users[index].linkedId,
+    );
+    notifyListeners();
+    return true;
+  }
+
   void addStudent(String name, String classId) {
     final newId = 's${DateTime.now().millisecondsSinceEpoch}';
     _students.add(Student(id: newId, name: name, classId: classId));
@@ -159,6 +182,50 @@ class AppState extends ChangeNotifier {
     }
   }
 
+  /// Add a brand-new teacher, their subjects, and a login account.
+  void addTeacher({
+    required String name,
+    required String userId,
+    required String password,
+    required List<String> subjectNames,
+    required List<String> classIds,
+  }) {
+    final ts = DateTime.now().millisecondsSinceEpoch;
+    final teacherId = 't_$ts';
+
+    final newSubjectIds = <String>[];
+    for (var i = 0; i < subjectNames.length; i++) {
+      final subId = 'sub_${ts}_$i';
+      _subjects.add(Subject(id: subId, name: subjectNames[i], teacherId: teacherId));
+      newSubjectIds.add(subId);
+    }
+
+    _teachers.add(Teacher(
+      id: teacherId,
+      name: name,
+      subjectIds: newSubjectIds,
+      classIds: classIds,
+    ));
+
+    _users.add(AppUser(
+      id: userId,
+      name: name,
+      role: UserRole.teacher,
+      password: password,
+      linkedId: teacherId,
+    ));
+
+    notifyListeners();
+  }
+
+  Subject? getSubject(String subjectId) {
+    try {
+      return _subjects.firstWhere((s) => s.id == subjectId);
+    } catch (_) {
+      return null;
+    }
+  }
+
   Student? getStudent(String studentId) {
     try {
       return _students.firstWhere((s) => s.id == studentId);
@@ -187,7 +254,7 @@ class AppState extends ChangeNotifier {
 
   /// Returns pass rate as a percentage (0–100), or -1 if no marks submitted.
   double getPassRate(String teacherId) {
-    final teacher = mockTeachers.firstWhere(
+    final teacher = _teachers.firstWhere(
       (t) => t.id == teacherId,
       orElse: () => const Teacher(id: '', name: '', subjectIds: [], classIds: []),
     );
@@ -221,7 +288,7 @@ class AppState extends ChangeNotifier {
   String? getHighestPerformingTeacherId() {
     double highest = -1;
     String? topId;
-    for (final teacher in mockTeachers) {
+    for (final teacher in _teachers) {
       final rate = getPassRate(teacher.id);
       if (rate > highest) {
         highest = rate;
