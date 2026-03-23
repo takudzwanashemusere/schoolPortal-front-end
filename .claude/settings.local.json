@@ -1,7 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(dart analyze:*)"
+      "Bash(dart analyze:*)",
+      "Bash(pip --version)",
+      "Bash(pip install:*)",
+      "Bash(python -m uvicorn main:app --reload --port 8000 --host 0.0.0.0)",
+      "Bash(curl -s http://127.0.0.1:8000/)",
+      "Bash(curl -s -X POST http://127.0.0.1:8000/auth/login -H \"Content-Type: application/json\" -d \"{\"\"user_id\"\":\"\"u0\"\",\"\"password\"\":\"\"admin123\"\"}\")",
+      "Bash(python -m json.tool)"
     ]
   }
 }
