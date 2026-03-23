@@ -21,3 +21,5 @@ every student is given a unique Id  so that when you access your portal you ente
 
 the admin panel  has all number of students  at the school and all classess , so  when teachers accesses certain class which they want  to eneter the marks  all the students inthe class appeears 
 
+
+ the admin should  be able to add a new teacher , why do i have  mrs Banda , Mr Mwale etc  i should have options to add new teacher who comes to the school the assign a subject and class too

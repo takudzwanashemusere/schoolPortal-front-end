@@ -4,12 +4,14 @@ import 'package:schoolwebsite/widgets/app_sidebar.dart';
 import 'package:schoolwebsite/screens/admin/admin_dashboard_page.dart';
 import 'package:schoolwebsite/screens/admin/admin_analytics_page.dart';
 import 'package:schoolwebsite/screens/admin/admin_classes_page.dart';
+import 'package:schoolwebsite/screens/admin/admin_teachers_page.dart';
 import 'package:schoolwebsite/screens/admin/admin_report_page.dart';
 
 const _navItems = [
   SidebarNavItem(label: 'Dashboard', icon: Icons.grid_view_rounded),
   SidebarNavItem(label: 'Analytics', icon: Icons.bar_chart_rounded),
   SidebarNavItem(label: 'Classes', icon: Icons.groups_rounded),
+  SidebarNavItem(label: 'Teachers', icon: Icons.person_rounded),
   SidebarNavItem(label: 'Reports', icon: Icons.description_rounded),
 ];
 
@@ -20,6 +22,7 @@ class AdminShell extends StatelessWidget {
     AdminDashboardPage(),
     AdminAnalyticsPage(),
     AdminClassesPage(),
+    AdminTeachersPage(),
     AdminReportPage(),
   ];
 

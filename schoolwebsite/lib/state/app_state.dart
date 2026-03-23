@@ -8,6 +8,7 @@ class AppState extends ChangeNotifier {
   AppUser? get currentUser => _currentUser;
 
   // ─── Mutable data ───────────────────────────────────────────────────────────
+  late List<Teacher> _teachers;
   late List<Student> _students;
   late List<Mark> _marks;
   late Set<String> _submittedTeacherIds;
@@ -18,6 +19,7 @@ class AppState extends ChangeNotifier {
 
   String get headmasterComment => _headmasterComment;
   String get headmasterSignature => _headmasterSignature;
+  List<Teacher> get teachers => List.unmodifiable(_teachers);
   List<Student> get students => List.unmodifiable(_students);
   List<Mark> get marks => List.unmodifiable(_marks);
   Set<String> get submittedTeacherIds => Set.unmodifiable(_submittedTeacherIds);
@@ -32,6 +34,14 @@ class AppState extends ChangeNotifier {
   int get studentPageIndex => _studentPageIndex;
 
   AppState() {
+    _teachers = mockTeachers
+        .map((t) => Teacher(
+              id: t.id,
+              name: t.name,
+              subjectIds: List<String>.from(t.subjectIds),
+              classIds: List<String>.from(t.classIds),
+            ))
+        .toList();
     _students = List<Student>.from(mockStudents);
     _marks = List<Mark>.from(initialMarks);
     _submittedTeacherIds = Set<String>.from(initialSubmittedTeacherIds);
@@ -113,6 +123,38 @@ class AppState extends ChangeNotifier {
     final index = _students.indexWhere((s) => s.id == studentId);
     if (index >= 0) {
       _students[index] = _students[index].copyWith(name: newName);
+      notifyListeners();
+    }
+  }
+
+  void addStudent(String name, String classId) {
+    final newId = 's${DateTime.now().millisecondsSinceEpoch}';
+    _students.add(Student(id: newId, name: name, classId: classId));
+    notifyListeners();
+  }
+
+  // ─── Teacher assignment ──────────────────────────────────────────────────────
+
+  Teacher? getTeacher(String teacherId) {
+    try {
+      return _teachers.firstWhere((t) => t.id == teacherId);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  void setTeacherClasses(String teacherId, List<String> classIds) {
+    final index = _teachers.indexWhere((t) => t.id == teacherId);
+    if (index >= 0) {
+      _teachers[index] = _teachers[index].copyWith(classIds: classIds);
+      notifyListeners();
+    }
+  }
+
+  void setTeacherSubjects(String teacherId, List<String> subjectIds) {
+    final index = _teachers.indexWhere((t) => t.id == teacherId);
+    if (index >= 0) {
+      _teachers[index] = _teachers[index].copyWith(subjectIds: subjectIds);
       notifyListeners();
     }
   }

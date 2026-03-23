@@ -28,6 +28,15 @@ class Teacher {
     required this.subjectIds,
     required this.classIds,
   });
+
+  Teacher copyWith({List<String>? subjectIds, List<String>? classIds}) {
+    return Teacher(
+      id: id,
+      name: name,
+      subjectIds: subjectIds ?? List.from(this.subjectIds),
+      classIds: classIds ?? List.from(this.classIds),
+    );
+  }
 }
 
 class Student {

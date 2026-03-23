@@ -11,12 +11,12 @@ class AdminDashboardPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final state = AppStateProvider.of(context);
 
-    final submittedCount =
-        state.submittedTeacherIds.length;
-    final notSubmitted = mockTeachers
+    final teachers = state.teachers;
+    final submittedCount = state.submittedTeacherIds.length;
+    final notSubmitted = teachers
         .where((t) => !state.submittedTeacherIds.contains(t.id))
         .toList();
-    final totalStudents = mockStudents.length;
+    final totalStudents = state.students.length;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(32),
@@ -50,8 +50,8 @@ class AdminDashboardPage extends StatelessWidget {
               Expanded(
                 child: StatCard(
                   label: 'Total Teachers',
-                  value: '${mockTeachers.length}',
-                  subtitle: '${mockTeachers.length} active',
+                  value: '${teachers.length}',
+                  subtitle: '${teachers.length} active',
                   accentColor: const Color(0xFF0891B2),
                 ),
               ),
@@ -68,9 +68,9 @@ class AdminDashboardPage extends StatelessWidget {
               Expanded(
                 child: StatCard(
                   label: 'Marks Submitted',
-                  value: '$submittedCount / ${mockTeachers.length}',
+                  value: '$submittedCount / ${teachers.length}',
                   subtitle: 'teachers have submitted',
-                  accentColor: submittedCount == mockTeachers.length
+                  accentColor: submittedCount == teachers.length
                       ? AppTheme.success
                       : AppTheme.warning,
                 ),
@@ -87,7 +87,7 @@ class AdminDashboardPage extends StatelessWidget {
           const SizedBox(height: 14),
           AppTable(
             headers: const ['TEACHER', 'SUBJECTS', 'CLASSES ASSIGNED', 'SUBMISSION STATUS'],
-            rows: mockTeachers.map((teacher) {
+            rows: teachers.map((teacher) {
               final submitted = state.submittedTeacherIds.contains(teacher.id);
               final subjects = mockSubjects
                   .where((s) => teacher.subjectIds.contains(s.id))
@@ -167,17 +167,18 @@ class AdminDashboardPage extends StatelessWidget {
           AppTable(
             headers: const ['CLASS', 'STUDENTS', 'ASSIGNED TEACHERS'],
             rows: mockClasses.map((cls) {
-              final teachers = mockTeachers
-                  .where((t) => cls.teacherIds.contains(t.id))
+              final assignedTeachers = state.teachers
+                  .where((t) => t.classIds.contains(cls.id))
                   .map((t) => t.name)
                   .join(', ');
+              final studentCount = state.getStudentsInClass(cls.id).length;
               return [
                 Text(cls.name,
                     style: const TextStyle(
                         fontSize: 14, fontWeight: FontWeight.w500)),
-                Text('${cls.studentIds.length}',
+                Text('$studentCount',
                     style: AppTheme.body),
-                Text(teachers,
+                Text(assignedTeachers,
                     style: const TextStyle(
                         fontSize: 13, color: AppTheme.textSecondary)),
               ];

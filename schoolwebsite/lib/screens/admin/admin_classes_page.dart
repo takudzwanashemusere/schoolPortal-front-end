@@ -14,6 +14,41 @@ class AdminClassesPage extends StatefulWidget {
 class _AdminClassesPageState extends State<AdminClassesPage> {
   String? _expandedClassId;
 
+  void _showAddStudentDialog(BuildContext context, String classId, String className) {
+    final nameController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Add Student to $className'),
+        content: TextField(
+          controller: nameController,
+          autofocus: true,
+          decoration: const InputDecoration(
+            labelText: 'Student Name',
+            hintText: 'e.g. John Banda',
+            border: OutlineInputBorder(),
+          ),
+          textCapitalization: TextCapitalization.words,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final name = nameController.text.trim();
+              if (name.isEmpty) return;
+              AppStateProvider.read(context).addStudent(name, classId);
+              Navigator.of(ctx).pop();
+            },
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = AppStateProvider.of(context);
@@ -46,8 +81,8 @@ class _AdminClassesPageState extends State<AdminClassesPage> {
               Expanded(
                 child: StatCard(
                   label: 'Total Students',
-                  value: '${mockStudents.length}',
-                  subtitle: 'Avg ${(mockStudents.length / mockClasses.length).toStringAsFixed(0)} per class',
+                  value: '${state.students.length}',
+                  subtitle: 'Avg ${(state.students.length / mockClasses.length).toStringAsFixed(0)} per class',
                   accentColor: const Color(0xFF7C3AED),
                 ),
               ),
@@ -187,6 +222,12 @@ class _AdminClassesPageState extends State<AdminClassesPage> {
                               Text(
                                 'Subjects: ${subjects.map((s) => s.name).join(', ')}',
                                 style: AppTheme.caption,
+                              ),
+                              const SizedBox(width: 16),
+                              ElevatedButton.icon(
+                                onPressed: () => _showAddStudentDialog(context, cls.id, cls.name),
+                                icon: const Icon(Icons.person_add_outlined, size: 16),
+                                label: const Text('Add Student'),
                               ),
                             ],
                           ),
