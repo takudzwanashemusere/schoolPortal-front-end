@@ -49,7 +49,9 @@ class _StaffLoginScreenState extends State<StaffLoginScreen> {
 
     final state = AppStateProvider.read(context);
     final success = state.loginAsRole(userId, password, _selectedRole.name);
-    if (!success) {
+    if (success) {
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    } else {
       setState(() => _errorMessage = 'Incorrect User ID or password.');
     }
   }

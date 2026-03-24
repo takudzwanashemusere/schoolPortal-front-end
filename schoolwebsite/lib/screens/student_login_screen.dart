@@ -37,9 +37,10 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
 
     final state = AppStateProvider.read(context);
     final success = state.loginAsRole(userId, password, 'student');
-    if (!success) {
-      setState(
-          () => _errorMessage = 'Incorrect Student ID or password.');
+    if (success) {
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    } else {
+      setState(() => _errorMessage = 'Incorrect Student ID or password.');
     }
   }
 

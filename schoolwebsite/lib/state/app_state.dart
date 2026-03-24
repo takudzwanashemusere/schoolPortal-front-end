@@ -18,7 +18,7 @@ class AppState extends ChangeNotifier {
   String _headmasterComment =
       'This student has demonstrated consistent effort and dedication throughout the academic year. '
       'We encourage continued focus on areas requiring improvement and commend their overall performance.';
-  String _headmasterSignature = 'Dr. James Banda\nHeadmaster\nExcellence High School';
+  String _headmasterSignature = 'Dr.  T Musere\nHeadmaster\nExcellence High School';
 
   String get headmasterComment => _headmasterComment;
   String get headmasterSignature => _headmasterSignature;

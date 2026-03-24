@@ -263,7 +263,10 @@ class _AdminReportPageState extends State<AdminReportPage> {
                           value: 'Excellence High School'),
                       _InfoRow(
                           label: 'Headmaster',
-                          value: 'Dr. James Banda'),
+                          value: AppStateProvider.of(context)
+                              .headmasterSignature
+                              .split('\n')
+                              .first),
                       const SizedBox(height: 16),
                       const Divider(color: Color(0xFFBAE6FD)),
                       const SizedBox(height: 12),
