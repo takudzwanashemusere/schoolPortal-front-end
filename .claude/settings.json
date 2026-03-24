@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(where mongo:*)",
+      "Bash(where mongosh:*)",
+      "Bash(sc query:*)",
+      "Bash(\"C:\\\\Program Files\\\\MongoDB\\\\Server\\\\8.2\\\\bin\\\\mongod.exe\" --version)"
+    ]
+  }
+}
