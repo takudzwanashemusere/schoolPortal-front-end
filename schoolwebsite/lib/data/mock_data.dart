@@ -3,7 +3,7 @@ import 'package:schoolwebsite/models/models.dart';
 // ─── Users ───────────────────────────────────────────────────────────────────
 
 const List<AppUser> mockUsers = [
-  AppUser(id: 'u0', name: 'Dr. T Musere', role: UserRole.admin, password: 'admin123'),
+  AppUser(id: '5829A', name: 'Dr. T Musere', role: UserRole.admin, password: 'admin123'),
   AppUser(id: 'u1', name: 'Mr. Patrick Mwale', role: UserRole.teacher, password: 'teacher123', linkedId: 't1'),
   AppUser(id: 'u2', name: 'Mrs. Grace Banda', role: UserRole.teacher, password: 'teacher123', linkedId: 't2'),
   AppUser(id: 'u3', name: 'Mr. Benson Phiri', role: UserRole.teacher, password: 'teacher123', linkedId: 't3'),

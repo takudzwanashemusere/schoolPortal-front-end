@@ -53,3 +53,8 @@ Teacher (Tembo)	u4	teacher123
 Student (Chanda)	u5	student123
 Student (Mwansa)	u6	student123
 Student (Bupe)	u7	student123
+
+
+
+ admin user iD = 5829A /////////////updated version 
+ password = admin123

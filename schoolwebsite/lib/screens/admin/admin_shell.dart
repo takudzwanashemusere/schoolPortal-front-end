@@ -6,6 +6,7 @@ import 'package:schoolwebsite/screens/admin/admin_analytics_page.dart';
 import 'package:schoolwebsite/screens/admin/admin_classes_page.dart';
 import 'package:schoolwebsite/screens/admin/admin_teachers_page.dart';
 import 'package:schoolwebsite/screens/admin/admin_report_page.dart';
+import 'package:schoolwebsite/screens/teacher/teacher_change_password_page.dart';
 
 const _navItems = [
   SidebarNavItem(label: 'Dashboard', icon: Icons.grid_view_rounded),
@@ -13,6 +14,7 @@ const _navItems = [
   SidebarNavItem(label: 'Classes', icon: Icons.groups_rounded),
   SidebarNavItem(label: 'Teachers', icon: Icons.person_rounded),
   SidebarNavItem(label: 'Reports', icon: Icons.description_rounded),
+  SidebarNavItem(label: 'Change Password', icon: Icons.lock_outline_rounded),
 ];
 
 class AdminShell extends StatelessWidget {
@@ -24,6 +26,7 @@ class AdminShell extends StatelessWidget {
     AdminClassesPage(),
     AdminTeachersPage(),
     AdminReportPage(),
+    TeacherChangePasswordPage(),
   ];
 
   @override
