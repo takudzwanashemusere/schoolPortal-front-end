@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:schoolwebsite/app_theme.dart';
-import 'package:schoolwebsite/data/mock_data.dart';
 import 'package:schoolwebsite/models/models.dart';
 import 'package:schoolwebsite/state/app_state_provider.dart';
 
@@ -13,11 +12,6 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   UserRole _selectedRole = UserRole.admin;
-
-  // Used for Admin and Student roles (dropdown)
-  String? _selectedUserId;
-
-  // Used for Teacher role (manual User ID entry)
   final _userIdController = TextEditingController();
   final _passwordController = TextEditingController();
   String? _errorMessage;
@@ -30,13 +24,9 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  List<AppUser> get _usersForRole =>
-      mockUsers.where((u) => u.role == _selectedRole).toList();
-
   void _onRoleChanged(UserRole role) {
     setState(() {
       _selectedRole = role;
-      _selectedUserId = null;
       _userIdController.clear();
       _errorMessage = null;
       _passwordController.clear();
@@ -44,42 +34,21 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _login() {
+    final userId = _userIdController.text.trim();
     final password = _passwordController.text.trim();
+
+    if (userId.isEmpty) {
+      setState(() => _errorMessage = 'Please enter your User ID.');
+      return;
+    }
     if (password.isEmpty) {
       setState(() => _errorMessage = 'Please enter your password.');
       return;
     }
 
-    String? userId;
-    if (_selectedRole == UserRole.teacher) {
-      userId = _userIdController.text.trim();
-      if (userId.isEmpty) {
-        setState(() => _errorMessage = 'Please enter your User ID.');
-        return;
-      }
-    } else {
-      userId = _selectedUserId;
-      if (userId == null) {
-        setState(() => _errorMessage = 'Please select a user.');
-        return;
-      }
-    }
-
-    final state = AppStateProvider.read(context);
-    final success = state.login(userId, password);
+    final success = AppStateProvider.read(context).login(userId, password);
     if (!success) {
       setState(() => _errorMessage = 'Incorrect User ID or password.');
-    }
-  }
-
-  String _passwordHint() {
-    switch (_selectedRole) {
-      case UserRole.admin:
-        return 'admin123';
-      case UserRole.teacher:
-        return 'teacher123';
-      case UserRole.student:
-        return 'student123';
     }
   }
 
@@ -129,19 +98,17 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 48),
                   _FeatureItem(
                     title: 'Administrator',
-                    description:
-                        'Oversee all academic data, analytics, and reports.',
+                    description: 'Oversee all academic data, analytics, and reports.',
                   ),
                   const SizedBox(height: 20),
                   _FeatureItem(
                     title: 'Teachers',
-                    description:
-                        'Log in with your User ID and password to manage marks.',
+                    description: 'Log in with your User ID and password to manage marks.',
                   ),
                   const SizedBox(height: 20),
                   _FeatureItem(
                     title: 'Students',
-                    description: 'View your personal results and report card.',
+                    description: 'Log in with your Student ID to view your results.',
                   ),
                 ],
               ),
@@ -161,15 +128,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     children: [
                       const Text('Sign In', style: AppTheme.heading1),
                       const SizedBox(height: 6),
-                      Text(
-                        _selectedRole == UserRole.teacher
-                            ? 'Enter your User ID and password to continue.'
-                            : 'Select your role and enter your credentials.',
+                      const Text(
+                        'Enter your User ID and password to continue.',
                         style: AppTheme.label,
                       ),
                       const SizedBox(height: 28),
 
-                      // ── Role selector ──────────────────────────────────────
+                      // ── Role selector ────────────────────────────────────
                       const Text('Role', style: AppTheme.heading3),
                       const SizedBox(height: 8),
                       _RoleSelector(
@@ -178,88 +143,22 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 20),
 
-                      // ── User selector / User ID field ──────────────────────
-                      if (_selectedRole == UserRole.teacher) ...[
-                        const Text('User ID', style: AppTheme.heading3),
-                        const SizedBox(height: 8),
-                        TextField(
-                          controller: _userIdController,
-                          style: const TextStyle(fontSize: 14),
-                          decoration: const InputDecoration(
-                            hintText: 'Enter your assigned User ID',
-                            prefixIcon: Icon(Icons.badge_outlined, size: 18),
-                          ),
-                          onChanged: (_) =>
-                              setState(() => _errorMessage = null),
-                          onSubmitted: (_) => _login(),
+                      // ── User ID ──────────────────────────────────────────
+                      const Text('User ID', style: AppTheme.heading3),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _userIdController,
+                        style: const TextStyle(fontSize: 14),
+                        decoration: const InputDecoration(
+                          hintText: 'Enter your User ID',
+                          prefixIcon: Icon(Icons.badge_outlined, size: 18),
                         ),
-                        const SizedBox(height: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 7),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF0F9FF),
-                            borderRadius: BorderRadius.circular(4),
-                            border: const Border.fromBorderSide(
-                                BorderSide(color: Color(0xFFBAE6FD))),
-                          ),
-                          child: const Text(
-                            'Demo User IDs: u1, u2, u3, u4',
-                            style: TextStyle(
-                              color: Color(0xFF0369A1),
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ] else ...[
-                        const Text('User Account', style: AppTheme.heading3),
-                        const SizedBox(height: 8),
-                        Container(
-                          decoration: BoxDecoration(
-                            color: AppTheme.surface,
-                            borderRadius: BorderRadius.circular(6),
-                            border: const Border.fromBorderSide(
-                                BorderSide(color: AppTheme.border)),
-                          ),
-                          padding:
-                              const EdgeInsets.symmetric(horizontal: 12),
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton<String>(
-                              value: _selectedUserId,
-                              isExpanded: true,
-                              hint: const Text(
-                                'Select an account',
-                                style: TextStyle(
-                                  color: AppTheme.textSecondary,
-                                  fontSize: 13,
-                                ),
-                              ),
-                              items: _usersForRole
-                                  .map(
-                                    (u) => DropdownMenuItem<String>(
-                                      value: u.id,
-                                      child: Text(
-                                        u.name,
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          color: AppTheme.textPrimary,
-                                        ),
-                                      ),
-                                    ),
-                                  )
-                                  .toList(),
-                              onChanged: (v) => setState(() {
-                                _selectedUserId = v;
-                                _errorMessage = null;
-                              }),
-                            ),
-                          ),
-                        ),
-                      ],
+                        onChanged: (_) => setState(() => _errorMessage = null),
+                        onSubmitted: (_) => _login(),
+                      ),
                       const SizedBox(height: 20),
 
-                      // ── Password ───────────────────────────────────────────
+                      // ── Password ─────────────────────────────────────────
                       const Text('Password', style: AppTheme.heading3),
                       const SizedBox(height: 8),
                       TextField(
@@ -267,7 +166,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         obscureText: _obscurePassword,
                         style: const TextStyle(fontSize: 14),
                         decoration: InputDecoration(
-                          hintText: 'Enter password',
+                          hintText: 'Enter your password',
                           suffixIcon: IconButton(
                             icon: Icon(
                               _obscurePassword
@@ -282,27 +181,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         onSubmitted: (_) => _login(),
                       ),
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 7),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF0F9FF),
-                          borderRadius: BorderRadius.circular(4),
-                          border: const Border.fromBorderSide(
-                              BorderSide(color: Color(0xFFBAE6FD))),
-                        ),
-                        child: Text(
-                          'Demo password: ${_passwordHint()}',
-                          style: const TextStyle(
-                            color: Color(0xFF0369A1),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
 
-                      // ── Error ──────────────────────────────────────────────
+                      // ── Error ────────────────────────────────────────────
                       if (_errorMessage != null) ...[
                         const SizedBox(height: 12),
                         Container(
@@ -322,7 +202,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ],
                       const SizedBox(height: 24),
 
-                      // ── Login button ───────────────────────────────────────
+                      // ── Sign In button ───────────────────────────────────
                       SizedBox(
                         height: 44,
                         child: ElevatedButton(
@@ -370,16 +250,14 @@ class _RoleSelector extends StatelessWidget {
             onTap: () => onChanged(role),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 150),
-              margin:
-                  EdgeInsets.only(right: role != UserRole.student ? 8 : 0),
+              margin: EdgeInsets.only(right: role != UserRole.student ? 8 : 0),
               padding: const EdgeInsets.symmetric(vertical: 10),
               decoration: BoxDecoration(
                 color: isSelected ? AppTheme.primary : AppTheme.surface,
                 borderRadius: BorderRadius.circular(6),
                 border: Border.fromBorderSide(
                   BorderSide(
-                    color:
-                        isSelected ? AppTheme.primary : AppTheme.border,
+                    color: isSelected ? AppTheme.primary : AppTheme.border,
                     width: isSelected ? 1.5 : 1,
                   ),
                 ),
@@ -388,13 +266,10 @@ class _RoleSelector extends StatelessWidget {
                 label,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: isSelected
-                      ? Colors.white
-                      : AppTheme.textSecondary,
+                  color: isSelected ? Colors.white : AppTheme.textSecondary,
                   fontSize: 13,
-                  fontWeight: isSelected
-                      ? FontWeight.w600
-                      : FontWeight.w400,
+                  fontWeight:
+                      isSelected ? FontWeight.w600 : FontWeight.w400,
                 ),
               ),
             ),
