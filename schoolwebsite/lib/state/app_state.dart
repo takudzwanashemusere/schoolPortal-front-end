@@ -178,9 +178,30 @@ class AppState extends ChangeNotifier {
     return true;
   }
 
+  /// Generates the lowest available student ID in the format C001, C002, …
+  /// If a student is removed their number is freed and given to the next addition.
+  String _nextStudentId() {
+    final used = _students
+        .map((s) => s.id)
+        .where((id) => RegExp(r'^C\d+$').hasMatch(id))
+        .map((id) => int.parse(id.substring(1)))
+        .toSet();
+    int n = 1;
+    while (used.contains(n)) {
+      n++;
+    }
+    return 'C${n.toString().padLeft(3, '0')}';
+  }
+
   void addStudent(String name, String classId) {
-    final newId = 's${DateTime.now().millisecondsSinceEpoch}';
-    _students.add(Student(id: newId, name: name, classId: classId));
+    _students.add(Student(id: _nextStudentId(), name: name, classId: classId));
+    notifyListeners();
+  }
+
+  void deleteStudent(String studentId) {
+    _students.removeWhere((s) => s.id == studentId);
+    _marks.removeWhere((m) => m.studentId == studentId);
+    _users.removeWhere((u) => u.linkedId == studentId);
     notifyListeners();
   }
 
