@@ -26,4 +26,12 @@ the admin panel  has all number of students  at the school and all classess , so
 
 
 
- each teacher should  have a certain user Id  and when login  there i no need to choose a name , they should eneter a user ID and a  unique password  and also they should  be able to change password , help to do that for  every teacher  who uses the account 
+ each teacher should  have a certain user Id  and when login  there i no need to choose a name , they should eneter a user ID and a  unique password  and also they should  be able to change password , help to do that for  every teacher  who uses the account
+
+
+
+  running backend :python -m uvicorn main:app --reload --port 800 
+  
+API: http://127.0.0.1:8000
+Swagger docs: http://127.0.0.1:8000/docs
+Database: MongoDB school_portal with all seed data loaded

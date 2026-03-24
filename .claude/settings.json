@@ -4,7 +4,12 @@
       "Bash(where mongo:*)",
       "Bash(where mongosh:*)",
       "Bash(sc query:*)",
-      "Bash(\"C:\\\\Program Files\\\\MongoDB\\\\Server\\\\8.2\\\\bin\\\\mongod.exe\" --version)"
+      "Bash(\"C:\\\\Program Files\\\\MongoDB\\\\Server\\\\8.2\\\\bin\\\\mongod.exe\" --version)",
+      "Read(//c/Program Files/MongoDB/**)",
+      "Read(//c/Program Files/**)",
+      "Bash(where \"MongoDB Compass\")",
+      "Bash(\"C:/Program Files/MongoDB/Server/8.2/bin/mongosh.exe\" --eval \"use school_portal; db.users.countDocuments\\(\\); db.teachers.countDocuments\\(\\); db.students.countDocuments\\(\\); db.marks.countDocuments\\(\\);\" --quiet)",
+      "Bash(python -c \":*)"
     ]
   }
 }
