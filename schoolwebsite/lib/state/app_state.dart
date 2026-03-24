@@ -82,6 +82,25 @@ class AppState extends ChangeNotifier {
     }
   }
 
+  /// Login that also validates the user belongs to the expected role.
+  bool loginAsRole(String userId, String password, String role) {
+    try {
+      final user = _users.firstWhere((u) => u.id == userId);
+      if (user.role.name != role) return false;
+      if (user.password == password) {
+        _currentUser = user;
+        _adminPageIndex = 0;
+        _teacherPageIndex = 0;
+        _studentPageIndex = 0;
+        notifyListeners();
+        return true;
+      }
+      return false;
+    } catch (_) {
+      return false;
+    }
+  }
+
   void logout() {
     _currentUser = null;
     notifyListeners();

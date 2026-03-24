@@ -1,87 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:schoolwebsite/app_theme.dart';
-import 'package:schoolwebsite/models/models.dart';
-import 'package:schoolwebsite/state/app_state_provider.dart';
+import 'package:schoolwebsite/screens/staff_login_screen.dart';
+import 'package:schoolwebsite/screens/student_login_screen.dart';
 
-class LoginScreen extends StatefulWidget {
+/// Landing page — user chooses Student Portal or Staff Portal.
+class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
-
-  @override
-  State<LoginScreen> createState() => _LoginScreenState();
-}
-
-class _LoginScreenState extends State<LoginScreen> {
-  UserRole _selectedRole = UserRole.admin;
-  final _userIdController = TextEditingController();
-  final _passwordController = TextEditingController();
-  String? _errorMessage;
-  bool _obscurePassword = true;
-
-  @override
-  void dispose() {
-    _userIdController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
-
-  void _onRoleChanged(UserRole role) {
-    setState(() {
-      _selectedRole = role;
-      _userIdController.clear();
-      _errorMessage = null;
-      _passwordController.clear();
-    });
-  }
-
-  void _login() {
-    final userId = _userIdController.text.trim();
-    final password = _passwordController.text.trim();
-
-    if (userId.isEmpty) {
-      setState(() => _errorMessage = 'Please enter your User ID.');
-      return;
-    }
-    if (password.isEmpty) {
-      setState(() => _errorMessage = 'Please enter your password.');
-      return;
-    }
-
-    final success = AppStateProvider.read(context).login(userId, password);
-    if (!success) {
-      setState(() => _errorMessage = 'Incorrect User ID or password.');
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: AppTheme.sidebarBg,
       body: Row(
         children: [
-          // ── Left panel ─────────────────────────────────────────────────────
+          // ── Left branding panel ──────────────────────────────────────────
           Expanded(
             flex: 2,
-            child: Container(
-              color: AppTheme.sidebarBg,
-              padding: const EdgeInsets.all(48),
+            child: Padding(
+              padding: const EdgeInsets.all(56),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
                     width: 4,
-                    height: 48,
+                    height: 52,
                     decoration: BoxDecoration(
                       color: AppTheme.sidebarAccent,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 28),
                   const Text(
                     'Excellence\nHigh School',
                     style: TextStyle(
                       color: AppTheme.sidebarTextActive,
-                      fontSize: 32,
+                      fontSize: 36,
                       fontWeight: FontWeight.w800,
                       height: 1.2,
                     ),
@@ -92,132 +46,88 @@ class _LoginScreenState extends State<LoginScreen> {
                     style: TextStyle(
                       color: AppTheme.sidebarText,
                       fontSize: 15,
-                      fontWeight: FontWeight.w400,
                     ),
                   ),
-                  const SizedBox(height: 48),
-                  _FeatureItem(
-                    title: 'Administrator',
-                    description: 'Oversee all academic data, analytics, and reports.',
+                  const SizedBox(height: 56),
+                  const Text(
+                    'Academic Year 2025/2026',
+                    style: TextStyle(
+                      color: AppTheme.sidebarText,
+                      fontSize: 13,
+                    ),
                   ),
-                  const SizedBox(height: 20),
-                  _FeatureItem(
-                    title: 'Teachers',
-                    description: 'Log in with your User ID and password to manage marks.',
-                  ),
-                  const SizedBox(height: 20),
-                  _FeatureItem(
-                    title: 'Students',
-                    description: 'Log in with your Student ID to view your results.',
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Term 1',
+                    style: TextStyle(
+                      color: AppTheme.sidebarAccent,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ],
               ),
             ),
           ),
 
-          // ── Right panel ────────────────────────────────────────────────────
+          // ── Right panel — portal selection ───────────────────────────────
           Expanded(
             flex: 3,
-            child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(32),
+            child: Container(
+              color: AppTheme.background,
+              child: Center(
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 420),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const Text('Sign In', style: AppTheme.heading1),
-                      const SizedBox(height: 6),
-                      const Text(
-                        'Enter your User ID and password to continue.',
-                        style: AppTheme.label,
-                      ),
-                      const SizedBox(height: 28),
-
-                      // ── Role selector ────────────────────────────────────
-                      const Text('Role', style: AppTheme.heading3),
-                      const SizedBox(height: 8),
-                      _RoleSelector(
-                        selected: _selectedRole,
-                        onChanged: _onRoleChanged,
-                      ),
-                      const SizedBox(height: 20),
-
-                      // ── User ID ──────────────────────────────────────────
-                      const Text('User ID', style: AppTheme.heading3),
-                      const SizedBox(height: 8),
-                      TextField(
-                        controller: _userIdController,
-                        style: const TextStyle(fontSize: 14),
-                        decoration: const InputDecoration(
-                          hintText: 'Enter your User ID',
-                          prefixIcon: Icon(Icons.badge_outlined, size: 18),
+                  constraints: const BoxConstraints(maxWidth: 520),
+                  child: Padding(
+                    padding: const EdgeInsets.all(40),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Welcome', style: AppTheme.heading1),
+                        const SizedBox(height: 6),
+                        const Text(
+                          'Select your portal to continue.',
+                          style: AppTheme.label,
                         ),
-                        onChanged: (_) => setState(() => _errorMessage = null),
-                        onSubmitted: (_) => _login(),
-                      ),
-                      const SizedBox(height: 20),
+                        const SizedBox(height: 40),
 
-                      // ── Password ─────────────────────────────────────────
-                      const Text('Password', style: AppTheme.heading3),
-                      const SizedBox(height: 8),
-                      TextField(
-                        controller: _passwordController,
-                        obscureText: _obscurePassword,
-                        style: const TextStyle(fontSize: 14),
-                        decoration: InputDecoration(
-                          hintText: 'Enter your password',
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _obscurePassword
-                                  ? Icons.visibility_off_outlined
-                                  : Icons.visibility_outlined,
-                              size: 18,
-                              color: AppTheme.textSecondary,
+                        // ── Portal cards ────────────────────────────────────
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _PortalCard(
+                                icon: Icons.school_rounded,
+                                title: 'Student Portal',
+                                description:
+                                    'View your results,\nreport card and performance.',
+                                color: const Color(0xFF0891B2),
+                                onTap: () => Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => const StudentLoginScreen(),
+                                  ),
+                                ),
+                              ),
                             ),
-                            onPressed: () => setState(
-                                () => _obscurePassword = !_obscurePassword),
-                          ),
-                        ),
-                        onSubmitted: (_) => _login(),
-                      ),
-
-                      // ── Error ────────────────────────────────────────────
-                      if (_errorMessage != null) ...[
-                        const SizedBox(height: 12),
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: AppTheme.errorBg,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            _errorMessage!,
-                            style: const TextStyle(
-                              color: AppTheme.error,
-                              fontSize: 13,
+                            const SizedBox(width: 20),
+                            Expanded(
+                              child: _PortalCard(
+                                icon: Icons.admin_panel_settings_rounded,
+                                title: 'Staff Portal',
+                                description:
+                                    'Administrator and teacher\naccess to manage marks.',
+                                color: AppTheme.primary,
+                                onTap: () => Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => const StaffLoginScreen(),
+                                  ),
+                                ),
+                              ),
                             ),
-                          ),
+                          ],
                         ),
                       ],
-                      const SizedBox(height: 24),
-
-                      // ── Sign In button ───────────────────────────────────
-                      SizedBox(
-                        height: 44,
-                        child: ElevatedButton(
-                          onPressed: _login,
-                          child: const Text('Sign In'),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      Center(
-                        child: Text(
-                          'Academic Year 2025/2026  —  Term 1',
-                          style: AppTheme.caption,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ),
@@ -229,102 +139,119 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 }
 
-class _RoleSelector extends StatelessWidget {
-  final UserRole selected;
-  final ValueChanged<UserRole> onChanged;
+// ─────────────────────────────────────────────────────────────────────────────
 
-  const _RoleSelector({required this.selected, required this.onChanged});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: UserRole.values.map((role) {
-        final isSelected = role == selected;
-        final label = role == UserRole.admin
-            ? 'Administrator'
-            : role == UserRole.teacher
-                ? 'Teacher'
-                : 'Student';
-        return Expanded(
-          child: GestureDetector(
-            onTap: () => onChanged(role),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 150),
-              margin: EdgeInsets.only(right: role != UserRole.student ? 8 : 0),
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              decoration: BoxDecoration(
-                color: isSelected ? AppTheme.primary : AppTheme.surface,
-                borderRadius: BorderRadius.circular(6),
-                border: Border.fromBorderSide(
-                  BorderSide(
-                    color: isSelected ? AppTheme.primary : AppTheme.border,
-                    width: isSelected ? 1.5 : 1,
-                  ),
-                ),
-              ),
-              child: Text(
-                label,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: isSelected ? Colors.white : AppTheme.textSecondary,
-                  fontSize: 13,
-                  fontWeight:
-                      isSelected ? FontWeight.w600 : FontWeight.w400,
-                ),
-              ),
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-}
-
-class _FeatureItem extends StatelessWidget {
+class _PortalCard extends StatefulWidget {
+  final IconData icon;
   final String title;
   final String description;
+  final Color color;
+  final VoidCallback onTap;
 
-  const _FeatureItem({required this.title, required this.description});
+  const _PortalCard({
+    required this.icon,
+    required this.title,
+    required this.description,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  State<_PortalCard> createState() => _PortalCardState();
+}
+
+class _PortalCardState extends State<_PortalCard> {
+  bool _hovered = false;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 6,
-          height: 6,
-          margin: const EdgeInsets.only(top: 6, right: 12),
-          decoration: const BoxDecoration(
-            color: AppTheme.sidebarAccent,
-            shape: BoxShape.circle,
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.all(28),
+          decoration: BoxDecoration(
+            color: _hovered ? widget.color : AppTheme.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.fromBorderSide(BorderSide(
+              color: _hovered ? widget.color : AppTheme.border,
+              width: _hovered ? 1.5 : 1,
+            )),
+            boxShadow: _hovered
+                ? [
+                    BoxShadow(
+                      color: widget.color.withValues(alpha: 0.2),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
+                    )
+                  ]
+                : [],
           ),
-        ),
-        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  color: AppTheme.sidebarTextActive,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: _hovered
+                      ? Colors.white.withValues(alpha: 0.2)
+                      : widget.color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  widget.icon,
+                  color: _hovered ? Colors.white : widget.color,
+                  size: 24,
                 ),
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: 20),
               Text(
-                description,
-                style: const TextStyle(
-                  color: AppTheme.sidebarText,
+                widget.title,
+                style: TextStyle(
+                  color: _hovered ? Colors.white : AppTheme.textPrimary,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                widget.description,
+                style: TextStyle(
+                  color: _hovered
+                      ? Colors.white.withValues(alpha: 0.8)
+                      : AppTheme.textSecondary,
                   fontSize: 12,
                   height: 1.5,
                 ),
               ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Text(
+                    'Sign In',
+                    style: TextStyle(
+                      color: _hovered ? Colors.white : widget.color,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.arrow_forward_rounded,
+                    size: 14,
+                    color: _hovered ? Colors.white : widget.color,
+                  ),
+                ],
+              ),
             ],
           ),
         ),
-      ],
+      ),
     );
   }
 }
