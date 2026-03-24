@@ -176,6 +176,84 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void deleteClass(String classId) {
+    _classes.removeWhere((c) => c.id == classId);
+    // Remove students that belonged to this class
+    _students.removeWhere((s) => s.classId == classId);
+    // Remove marks for students in this class
+    _marks.removeWhere((m) => m.classId == classId);
+    notifyListeners();
+  }
+
+  /// Advances every class by one form at year-end.
+  /// Form 4 classes graduate (deleted with their students/marks).
+  /// Form 1/2/3 → renamed to Form 2/3/4 respectively.
+  /// Returns the count of graduating (deleted) Form 4 students.
+  int promoteClasses() {
+    final graduatingClassIds = <String>[];
+    final updatedClasses = <ClassGroup>[];
+
+    for (final cls in _classes) {
+      // Match "Form 4", "Form 4A", "Form 4B", etc.
+      final match = RegExp(r'^Form (\d+)(.*)$').firstMatch(cls.name);
+      if (match == null) {
+        updatedClasses.add(cls); // unknown format — leave as-is
+        continue;
+      }
+      final formNumber = int.parse(match.group(1)!);
+      final suffix = match.group(2) ?? '';
+
+      if (formNumber >= 4) {
+        // Form 4 graduates
+        graduatingClassIds.add(cls.id);
+      } else {
+        // Rename to next form, keep stream suffix (e.g. A, B, C)
+        updatedClasses.add(ClassGroup(
+          id: cls.id,
+          name: 'Form ${formNumber + 1}$suffix',
+          studentIds: List.from(cls.studentIds),
+          teacherIds: List.from(cls.teacherIds),
+        ));
+      }
+    }
+
+    // Count graduating students before removal
+    final graduatingStudentIds = _students
+        .where((s) => graduatingClassIds.contains(s.classId))
+        .map((s) => s.id)
+        .toSet();
+
+    // Remove graduating students, their marks, and Form 4 classes
+    _marks.removeWhere(
+      (m) => graduatingStudentIds.contains(m.studentId) ||
+          graduatingClassIds.contains(m.classId),
+    );
+    _students.removeWhere((s) => graduatingClassIds.contains(s.classId));
+    _classes = updatedClasses;
+
+    notifyListeners();
+    return graduatingStudentIds.length;
+  }
+
+  void deleteTeacher(String teacherId) {
+    // Remove the teacher's subjects
+    final teacher = _teachers.firstWhere(
+      (t) => t.id == teacherId,
+      orElse: () => const Teacher(id: '', name: '', subjectIds: [], classIds: []),
+    );
+    if (teacher.id.isEmpty) return;
+    _subjects.removeWhere((s) => teacher.subjectIds.contains(s.id));
+    // Remove teacher's marks
+    _marks.removeWhere((m) => teacher.subjectIds.contains(m.subjectId));
+    // Remove submission record
+    _submittedTeacherIds.remove(teacherId);
+    // Remove the teacher
+    _teachers.removeWhere((t) => t.id == teacherId);
+    // Remove their login account
+    _users.removeWhere((u) => u.linkedId == teacherId);
+    notifyListeners();
+  }
+
   // ─── Teacher assignment ──────────────────────────────────────────────────────
 
   Teacher? getTeacher(String teacherId) {

@@ -13,6 +13,118 @@ class AdminClassesPage extends StatefulWidget {
 class _AdminClassesPageState extends State<AdminClassesPage> {
   String? _expandedClassId;
 
+  void _confirmPromoteAll(BuildContext context) {
+    final state = AppStateProvider.read(context);
+    final form4Classes = state.classes
+        .where((c) => RegExp(r'^Form 4').hasMatch(c.name))
+        .map((c) => c.name)
+        .toList();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Promote All Classes'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'This will advance every class by one year at the end of the academic year:',
+            ),
+            const SizedBox(height: 12),
+            const Text('  Form 1  →  Form 2',
+                style: TextStyle(fontWeight: FontWeight.w500)),
+            const Text('  Form 2  →  Form 3',
+                style: TextStyle(fontWeight: FontWeight.w500)),
+            const Text('  Form 3A/B/C  →  Form 4A/B/C',
+                style: TextStyle(fontWeight: FontWeight.w500)),
+            const SizedBox(height: 12),
+            if (form4Classes.isNotEmpty) ...[
+              const Divider(),
+              const SizedBox(height: 8),
+              Text(
+                'Form 4 classes will graduate and be permanently removed:',
+                style: TextStyle(color: AppTheme.error, fontSize: 13),
+              ),
+              const SizedBox(height: 6),
+              ...form4Classes.map((name) => Text(
+                    '  • $name',
+                    style: const TextStyle(
+                        color: AppTheme.error, fontWeight: FontWeight.w600),
+                  )),
+            ],
+            const SizedBox(height: 12),
+            const Text(
+              'This action cannot be undone.',
+              style: TextStyle(
+                  fontStyle: FontStyle.italic,
+                  color: AppTheme.textSecondary,
+                  fontSize: 12),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.error,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () {
+              final graduated =
+                  AppStateProvider.read(context).promoteClasses();
+              Navigator.of(ctx).pop();
+              setState(() => _expandedClassId = null);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    'Classes promoted. $graduated student(s) graduated from Form 4.',
+                  ),
+                  backgroundColor: AppTheme.success,
+                ),
+              );
+            },
+            child: const Text('Promote All'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmDeleteClass(BuildContext context, String classId, String className) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Class'),
+        content: Text(
+          'Are you sure you want to delete "$className"? '
+          'All students and marks in this class will also be removed.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.error,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () {
+              AppStateProvider.read(context).deleteClass(classId);
+              Navigator.of(ctx).pop();
+              setState(() => _expandedClassId = null);
+            },
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showAddClassDialog(BuildContext context) {
     final nameController = TextEditingController();
     showDialog(
@@ -108,6 +220,16 @@ class _AdminClassesPageState extends State<AdminClassesPage> {
                   ],
                 ),
               ),
+              OutlinedButton.icon(
+                onPressed: () => _confirmPromoteAll(context),
+                icon: const Icon(Icons.upgrade_rounded, size: 16),
+                label: const Text('Promote All'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppTheme.error,
+                  side: const BorderSide(color: AppTheme.error),
+                ),
+              ),
+              const SizedBox(width: 12),
               ElevatedButton.icon(
                 onPressed: () => _showAddClassDialog(context),
                 icon: const Icon(Icons.add_rounded, size: 16),
@@ -226,6 +348,12 @@ class _AdminClassesPageState extends State<AdminClassesPage> {
                                 ),
                               ],
                             ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete_outline_rounded,
+                                color: AppTheme.error, size: 20),
+                            tooltip: 'Delete Class',
+                            onPressed: () => _confirmDeleteClass(context, cls.id, cls.name),
                           ),
                           // Teachers chips
                           ...teachers.map(

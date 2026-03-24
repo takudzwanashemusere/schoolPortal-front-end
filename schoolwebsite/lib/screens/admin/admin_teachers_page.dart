@@ -259,6 +259,37 @@ class _TeacherAssignmentCard extends StatefulWidget {
 class _TeacherAssignmentCardState extends State<_TeacherAssignmentCard> {
   bool _expanded = false;
 
+  void _confirmDelete(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Teacher'),
+        content: Text(
+          'Are you sure you want to remove ${widget.teacher.name}? '
+          'This will also delete their subjects and all related marks.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.error,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () {
+              AppStateProvider.read(context)
+                  .deleteTeacher(widget.teacher.id);
+              Navigator.of(ctx).pop();
+            },
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showClassDialog() {
     final state = AppStateProvider.read(context);
     final selected = Set<String>.from(widget.teacher.classIds);
@@ -412,6 +443,12 @@ class _TeacherAssignmentCardState extends State<_TeacherAssignmentCard> {
                         ),
                       ],
                     ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline_rounded,
+                        color: AppTheme.error, size: 20),
+                    tooltip: 'Delete Teacher',
+                    onPressed: () => _confirmDelete(context),
                   ),
                   Icon(
                     _expanded

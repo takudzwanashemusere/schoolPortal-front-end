@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:schoolwebsite/app_theme.dart';
-import 'package:schoolwebsite/data/mock_data.dart';
 import 'package:schoolwebsite/state/app_state_provider.dart';
 import 'package:schoolwebsite/widgets/stat_card.dart';
 
@@ -59,8 +58,8 @@ class AdminDashboardPage extends StatelessWidget {
               Expanded(
                 child: StatCard(
                   label: 'Classes',
-                  value: '${mockClasses.length}',
-                  subtitle: 'Form 3 and Form 4',
+                  value: '${state.classes.length}',
+                  subtitle: '${state.classes.length} active',
                   accentColor: const Color(0xFF7C3AED),
                 ),
               ),
@@ -89,11 +88,11 @@ class AdminDashboardPage extends StatelessWidget {
             headers: const ['TEACHER', 'SUBJECTS', 'CLASSES ASSIGNED', 'SUBMISSION STATUS'],
             rows: teachers.map((teacher) {
               final submitted = state.submittedTeacherIds.contains(teacher.id);
-              final subjects = mockSubjects
+              final subjects = state.subjects
                   .where((s) => teacher.subjectIds.contains(s.id))
                   .map((s) => s.name)
                   .join(', ');
-              final classes = mockClasses
+              final classes = state.classes
                   .where((c) => teacher.classIds.contains(c.id))
                   .map((c) => c.name)
                   .join(', ');
@@ -166,7 +165,7 @@ class AdminDashboardPage extends StatelessWidget {
           const SizedBox(height: 14),
           AppTable(
             headers: const ['CLASS', 'STUDENTS', 'ASSIGNED TEACHERS'],
-            rows: mockClasses.map((cls) {
+            rows: state.classes.map((cls) {
               final assignedTeachers = state.teachers
                   .where((t) => t.classIds.contains(cls.id))
                   .map((t) => t.name)

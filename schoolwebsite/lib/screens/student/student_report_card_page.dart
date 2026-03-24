@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:schoolwebsite/app_theme.dart';
-import 'package:schoolwebsite/data/mock_data.dart';
 import 'package:schoolwebsite/models/models.dart';
 import 'package:schoolwebsite/state/app_state_provider.dart';
 import 'package:schoolwebsite/widgets/stat_card.dart';
@@ -18,13 +17,13 @@ class StudentReportCardPage extends StatelessWidget {
       return const Center(child: Text('Student record not found.'));
     }
 
-    final classGroup = mockClasses.firstWhere(
+    final classGroup = state.classes.firstWhere(
       (c) => c.id == student.classId,
       orElse: () =>
           const ClassGroup(id: '', name: '', studentIds: [], teacherIds: []),
     );
 
-    final classSubjects = mockSubjects
+    final classSubjects = state.subjects
         .where((s) => classGroup.teacherIds.contains(s.teacherId))
         .toList();
 

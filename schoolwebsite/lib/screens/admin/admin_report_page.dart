@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:schoolwebsite/app_theme.dart';
-import 'package:schoolwebsite/data/mock_data.dart';
 import 'package:schoolwebsite/state/app_state_provider.dart';
 import 'package:schoolwebsite/widgets/stat_card.dart';
 
@@ -50,12 +49,12 @@ class _AdminReportPageState extends State<AdminReportPage> {
       return;
     }
     final state = AppStateProvider.read(context);
-    final cls = mockClasses.firstWhere((c) => c.id == _selectedClassId!);
+    final cls = state.classes.firstWhere((c) => c.id == _selectedClassId!);
     final students = state.getStudentsInClass(cls.id);
 
     // Subjects taught in this class
     final classTeacherIds = cls.teacherIds;
-    final classSubjects = mockSubjects
+    final classSubjects = state.subjects
         .where((s) => classTeacherIds.contains(s.teacherId))
         .toList();
 
@@ -195,7 +194,7 @@ class _AdminReportPageState extends State<AdminReportPage> {
                                     fontSize: 13,
                                   ),
                                 ),
-                                items: mockClasses
+                                items: AppStateProvider.of(context).classes
                                     .map(
                                       (c) => DropdownMenuItem<String>(
                                         value: c.id,
