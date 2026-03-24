@@ -10,7 +10,8 @@
       "Bash(where \"MongoDB Compass\")",
       "Bash(\"C:/Program Files/MongoDB/Server/8.2/bin/mongosh.exe\" --eval \"use school_portal; db.users.countDocuments\\(\\); db.teachers.countDocuments\\(\\); db.students.countDocuments\\(\\); db.marks.countDocuments\\(\\);\" --quiet)",
       "Bash(python -c \":*)",
-      "Bash(echo \"EXIT:$?\")"
+      "Bash(echo \"EXIT:$?\")",
+      "Read(//c/Users/pc/AppData/Local/Temp/claude/c--Users-pc-OneDrive-Desktop-schoolPortal/2169906d-211f-4a18-92e0-defb5f0af33b/tasks/**)"
     ]
   }
 }

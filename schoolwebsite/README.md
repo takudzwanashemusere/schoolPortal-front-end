@@ -38,4 +38,18 @@ Database: MongoDB school_portal with all seed data loaded
 
  the user IDs are  u0, U1, u2, u3, u4, 
  password = teacher123 or 246
- student password = student123
+ student password = student123 //// u6
+
+
+
+ All default credentials:
+
+Role	User ID	Password
+Admin	u0	admin123
+Teacher (Mwale)	u1	teacher123
+Teacher (Banda)	u2	teacher123
+Teacher (Phiri)	u3	teacher123
+Teacher (Tembo)	u4	teacher123
+Student (Chanda)	u5	student123
+Student (Mwansa)	u6	student123
+Student (Bupe)	u7	student123
