@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:schoolwebsite/app_theme.dart';
-import 'package:schoolwebsite/data/mock_data.dart';
 import 'package:schoolwebsite/state/app_state_provider.dart';
 import 'package:schoolwebsite/widgets/stat_card.dart';
 
@@ -13,6 +12,41 @@ class AdminClassesPage extends StatefulWidget {
 
 class _AdminClassesPageState extends State<AdminClassesPage> {
   String? _expandedClassId;
+
+  void _showAddClassDialog(BuildContext context) {
+    final nameController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Add New Class'),
+        content: TextField(
+          controller: nameController,
+          autofocus: true,
+          decoration: const InputDecoration(
+            labelText: 'Class Name',
+            hintText: 'e.g. Form 5A',
+            border: OutlineInputBorder(),
+          ),
+          textCapitalization: TextCapitalization.words,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final name = nameController.text.trim();
+              if (name.isEmpty) return;
+              AppStateProvider.read(context).addClass(name);
+              Navigator.of(ctx).pop();
+            },
+            child: const Text('Add Class'),
+          ),
+        ],
+      ),
+    );
+  }
 
   void _showAddStudentDialog(BuildContext context, String classId, String className) {
     final nameController = TextEditingController();
@@ -59,11 +93,27 @@ class _AdminClassesPageState extends State<AdminClassesPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // ── Header ───────────────────────────────────────────────────────
-          const Text('Classes', style: AppTheme.heading1),
-          const SizedBox(height: 4),
-          const Text(
-            'Overview of all classes, assigned teachers, and students.',
-            style: AppTheme.label,
+          Row(
+            children: [
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Classes', style: AppTheme.heading1),
+                    SizedBox(height: 4),
+                    Text(
+                      'Overview of all classes, assigned teachers, and students.',
+                      style: AppTheme.label,
+                    ),
+                  ],
+                ),
+              ),
+              ElevatedButton.icon(
+                onPressed: () => _showAddClassDialog(context),
+                icon: const Icon(Icons.add_rounded, size: 16),
+                label: const Text('Add Class'),
+              ),
+            ],
           ),
           const SizedBox(height: 28),
 
@@ -73,7 +123,7 @@ class _AdminClassesPageState extends State<AdminClassesPage> {
               Expanded(
                 child: StatCard(
                   label: 'Total Classes',
-                  value: '${mockClasses.length}',
+                  value: '${state.classes.length}',
                   accentColor: AppTheme.primaryLight,
                 ),
               ),
@@ -82,7 +132,9 @@ class _AdminClassesPageState extends State<AdminClassesPage> {
                 child: StatCard(
                   label: 'Total Students',
                   value: '${state.students.length}',
-                  subtitle: 'Avg ${(state.students.length / mockClasses.length).toStringAsFixed(0)} per class',
+                  subtitle: state.classes.isNotEmpty
+                      ? 'Avg ${(state.students.length / state.classes.length).toStringAsFixed(0)} per class'
+                      : '',
                   accentColor: const Color(0xFF7C3AED),
                 ),
               ),
@@ -90,8 +142,10 @@ class _AdminClassesPageState extends State<AdminClassesPage> {
               Expanded(
                 child: StatCard(
                   label: 'Total Subjects',
-                  value: '${mockSubjects.length}',
-                  subtitle: '${(mockSubjects.length / mockClasses.length).toStringAsFixed(0)} avg per class',
+                  value: '${state.subjects.length}',
+                  subtitle: state.classes.isNotEmpty
+                      ? '${(state.subjects.length / state.classes.length).toStringAsFixed(0)} avg per class'
+                      : '',
                   accentColor: const Color(0xFF0891B2),
                 ),
               ),
@@ -105,12 +159,12 @@ class _AdminClassesPageState extends State<AdminClassesPage> {
             subtitle: 'Select a class to view its student roster.',
           ),
           const SizedBox(height: 14),
-          ...mockClasses.map((cls) {
+          ...state.classes.map((cls) {
             final students = state.getStudentsInClass(cls.id);
-            final teachers = mockTeachers
+            final teachers = state.teachers
                 .where((t) => cls.teacherIds.contains(t.id))
                 .toList();
-            final subjects = mockSubjects
+            final subjects = state.subjects
                 .where((s) => cls.teacherIds.contains(s.teacherId))
                 .toList();
             final isExpanded = _expandedClassId == cls.id;

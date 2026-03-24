@@ -9,7 +9,8 @@
       "Read(//c/Program Files/**)",
       "Bash(where \"MongoDB Compass\")",
       "Bash(\"C:/Program Files/MongoDB/Server/8.2/bin/mongosh.exe\" --eval \"use school_portal; db.users.countDocuments\\(\\); db.teachers.countDocuments\\(\\); db.students.countDocuments\\(\\); db.marks.countDocuments\\(\\);\" --quiet)",
-      "Bash(python -c \":*)"
+      "Bash(python -c \":*)",
+      "Bash(echo \"EXIT:$?\")"
     ]
   }
 }

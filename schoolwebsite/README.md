@@ -31,7 +31,11 @@ the admin panel  has all number of students  at the school and all classess , so
 
 
   running backend :python -m uvicorn main:app --reload --port 800 
-  
+
 API: http://127.0.0.1:8000
 Swagger docs: http://127.0.0.1:8000/docs
 Database: MongoDB school_portal with all seed data loaded
+
+ the user IDs are  U1, u2, u3, u4, 
+ password = teacher123 or 246
+ 

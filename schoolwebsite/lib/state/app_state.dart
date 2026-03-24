@@ -12,6 +12,7 @@ class AppState extends ChangeNotifier {
   late List<Teacher> _teachers;
   late List<Subject> _subjects;
   late List<Student> _students;
+  late List<ClassGroup> _classes;
   late List<Mark> _marks;
   late Set<String> _submittedTeacherIds;
   String _headmasterComment =
@@ -27,7 +28,7 @@ class AppState extends ChangeNotifier {
   List<Student> get students => List.unmodifiable(_students);
   List<Mark> get marks => List.unmodifiable(_marks);
   Set<String> get submittedTeacherIds => Set.unmodifiable(_submittedTeacherIds);
-  List<ClassGroup> get classes => List.unmodifiable(mockClasses);
+  List<ClassGroup> get classes => List.unmodifiable(_classes);
 
   // ─── Navigation (per role) ──────────────────────────────────────────────────
   int _adminPageIndex = 0;
@@ -49,6 +50,14 @@ class AppState extends ChangeNotifier {
             ))
         .toList();
     _subjects = List<Subject>.from(mockSubjects);
+    _classes = mockClasses
+        .map((c) => ClassGroup(
+              id: c.id,
+              name: c.name,
+              studentIds: List<String>.from(c.studentIds),
+              teacherIds: List<String>.from(c.teacherIds),
+            ))
+        .toList();
     _students = List<Student>.from(mockStudents);
     _marks = List<Mark>.from(initialMarks);
     _submittedTeacherIds = Set<String>.from(initialSubmittedTeacherIds);
@@ -153,6 +162,17 @@ class AppState extends ChangeNotifier {
   void addStudent(String name, String classId) {
     final newId = 's${DateTime.now().millisecondsSinceEpoch}';
     _students.add(Student(id: newId, name: name, classId: classId));
+    notifyListeners();
+  }
+
+  void addClass(String name) {
+    final newId = 'c_${DateTime.now().millisecondsSinceEpoch}';
+    _classes.add(ClassGroup(
+      id: newId,
+      name: name,
+      studentIds: [],
+      teacherIds: [],
+    ));
     notifyListeners();
   }
 
@@ -264,7 +284,7 @@ class AppState extends ChangeNotifier {
     int passing = 0;
 
     for (final classId in teacher.classIds) {
-      final classGroup = mockClasses.firstWhere(
+      final classGroup = _classes.firstWhere(
         (c) => c.id == classId,
         orElse: () => const ClassGroup(id: '', name: '', studentIds: [], teacherIds: []),
       );
