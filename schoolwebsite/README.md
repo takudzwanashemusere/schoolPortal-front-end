@@ -68,3 +68,12 @@ In the connection string box, enter:
 mongodb://localhost:27017
 Click Connect
 You'll see your database listed — look for school_portal
+
+
+Db password 3sRh5FqmsMFfeYjW
+
+connection method = mongodb+srv://musere2002_db_user:3sRh5FqmsMFfeYjW@cluster0.d0amm88.mongodb.net/?appName=Cluster0
+
+
+
+networking URL = schoolportal-front-end.railway.internal
