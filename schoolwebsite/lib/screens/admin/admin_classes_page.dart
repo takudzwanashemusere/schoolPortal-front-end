@@ -113,8 +113,9 @@ class _AdminClassesPageState extends State<AdminClassesPage> {
               backgroundColor: AppTheme.error,
               foregroundColor: Colors.white,
             ),
-            onPressed: () {
-              AppStateProvider.read(context).deleteClass(classId);
+            onPressed: () async {
+              await AppStateProvider.read(context).deleteClass(classId);
+              if (!ctx.mounted) return;
               Navigator.of(ctx).pop();
               setState(() => _expandedClassId = null);
             },
@@ -147,10 +148,11 @@ class _AdminClassesPageState extends State<AdminClassesPage> {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               final name = nameController.text.trim();
               if (name.isEmpty) return;
-              AppStateProvider.read(context).addClass(name);
+              await AppStateProvider.read(context).addClass(name);
+              if (!ctx.mounted) return;
               Navigator.of(ctx).pop();
             },
             child: const Text('Add Class'),
@@ -182,10 +184,11 @@ class _AdminClassesPageState extends State<AdminClassesPage> {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               final name = nameController.text.trim();
               if (name.isEmpty) return;
-              AppStateProvider.read(context).addStudent(name, classId);
+              await AppStateProvider.read(context).addStudent(name, classId);
+              if (!ctx.mounted) return;
               Navigator.of(ctx).pop();
             },
             child: const Text('Add'),

@@ -333,7 +333,7 @@ class _MarksTableState extends State<_MarksTable> {
 
       final newName = _nameControllers[student.id]?.text.trim() ?? '';
       if (newName.isNotEmpty && newName != student.name) {
-        state.updateStudentName(student.id, newName);
+        await state.updateStudentName(student.id, newName);
       }
 
       if (testText.isEmpty && examText.isEmpty) continue;
@@ -351,7 +351,7 @@ class _MarksTableState extends State<_MarksTable> {
         continue;
       }
 
-      state.upsertMark(Mark(
+      await state.upsertMark(Mark(
         studentId: student.id,
         subjectId: widget.subjectId,
         classId: widget.classId,

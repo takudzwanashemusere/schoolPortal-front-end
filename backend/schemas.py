@@ -95,6 +95,11 @@ class StudentResponse(BaseModel):
     class_id: str
 
 
+class StudentCreateRequest(BaseModel):
+    name: str
+    class_id: str
+
+
 class StudentUpdateRequest(BaseModel):
     name: str
 
@@ -108,6 +113,10 @@ class ClassGroupResponse(BaseModel):
     name: str
     student_ids: list[str] = []
     teacher_ids: list[str] = []
+
+
+class ClassCreateRequest(BaseModel):
+    name: str
 
 
 # ── Mark ──────────────────────────────────────────────────────────────────────

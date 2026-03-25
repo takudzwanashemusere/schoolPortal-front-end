@@ -22,10 +22,11 @@ class TeacherStudentsPage extends StatelessWidget {
             border: OutlineInputBorder(),
           ),
           textCapitalization: TextCapitalization.words,
-          onSubmitted: (value) {
+          onSubmitted: (value) async {
             final name = value.trim();
             if (name.isEmpty) return;
-            AppStateProvider.read(context).addStudent(name, classId);
+            await AppStateProvider.read(context).addStudent(name, classId);
+            if (!ctx.mounted) return;
             Navigator.of(ctx).pop();
           },
         ),
@@ -35,10 +36,11 @@ class TeacherStudentsPage extends StatelessWidget {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               final name = nameController.text.trim();
               if (name.isEmpty) return;
-              AppStateProvider.read(context).addStudent(name, classId);
+              await AppStateProvider.read(context).addStudent(name, classId);
+              if (!ctx.mounted) return;
               Navigator.of(ctx).pop();
             },
             child: const Text('Add'),
@@ -135,8 +137,9 @@ class _ClassStudentCard extends StatelessWidget {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () {
-              AppStateProvider.read(context).deleteStudent(student.id);
+            onPressed: () async {
+              await AppStateProvider.read(context).deleteStudent(student.id);
+              if (!ctx.mounted) return;
               Navigator.of(ctx).pop();
             },
             style: ElevatedButton.styleFrom(

@@ -206,7 +206,8 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  void upsertMark(Mark mark) {
+  Future<void> upsertMark(Mark mark) async {
+    await ApiService.instance.upsertMark(mark);
     final index = _marks.indexWhere(
       (m) => m.studentId == mark.studentId && m.subjectId == mark.subjectId,
     );
@@ -226,7 +227,8 @@ class AppState extends ChangeNotifier {
 
   // ─── Student management ─────────────────────────────────────────────────────
 
-  void updateStudentName(String studentId, String newName) {
+  Future<void> updateStudentName(String studentId, String newName) async {
+    await ApiService.instance.updateStudentName(studentId, newName);
     final index = _students.indexWhere((s) => s.id == studentId);
     if (index >= 0) {
       _students[index] = _students[index].copyWith(name: newName);
@@ -250,50 +252,42 @@ class AppState extends ChangeNotifier {
     return true;
   }
 
-  /// Generates the lowest available student ID in the format C001, C002, …
-  /// If a student is removed their number is freed and given to the next addition.
-  String _nextStudentId() {
-    final used = _students
-        .map((s) => s.id)
-        .where((id) => RegExp(r'^C\d+$').hasMatch(id))
-        .map((id) => int.parse(id.substring(1)))
-        .toSet();
-    int n = 1;
-    while (used.contains(n)) {
-      n++;
+Future<void> addStudent(String name, String classId) async {
+    final student = await ApiService.instance.createStudent(name, classId);
+    _students.add(student);
+    final ci = _classes.indexWhere((c) => c.id == classId);
+    if (ci >= 0) {
+      final cls = _classes[ci];
+      _classes[ci] = ClassGroup(
+        id: cls.id, name: cls.name,
+        studentIds: [...cls.studentIds, student.id],
+        teacherIds: cls.teacherIds,
+      );
     }
-    return 'C${n.toString().padLeft(3, '0')}';
-  }
-
-  void addStudent(String name, String classId) {
-    _students.add(Student(id: _nextStudentId(), name: name, classId: classId));
     notifyListeners();
   }
 
-  void deleteStudent(String studentId) {
+  Future<void> deleteStudent(String studentId) async {
+    await ApiService.instance.deleteStudent(studentId);
     _students.removeWhere((s) => s.id == studentId);
     _marks.removeWhere((m) => m.studentId == studentId);
     _users.removeWhere((u) => u.linkedId == studentId);
     notifyListeners();
   }
 
-  void addClass(String name) {
-    final newId = 'c_${DateTime.now().millisecondsSinceEpoch}';
-    _classes.add(ClassGroup(
-      id: newId,
-      name: name,
-      studentIds: [],
-      teacherIds: [],
-    ));
+  Future<void> addClass(String name) async {
+    final cls = await ApiService.instance.createClass(name);
+    _classes.add(cls);
     notifyListeners();
   }
 
-  void deleteClass(String classId) {
+  Future<void> deleteClass(String classId) async {
+    await ApiService.instance.deleteClass(classId);
+    final cls = _classes.firstWhere((c) => c.id == classId,
+        orElse: () => const ClassGroup(id: '', name: '', studentIds: [], teacherIds: []));
     _classes.removeWhere((c) => c.id == classId);
-    // Remove students that belonged to this class
     _students.removeWhere((s) => s.classId == classId);
-    // Remove marks for students in this class
-    _marks.removeWhere((m) => m.classId == classId);
+    _marks.removeWhere((m) => m.classId == classId || cls.studentIds.contains(m.studentId));
     notifyListeners();
   }
 

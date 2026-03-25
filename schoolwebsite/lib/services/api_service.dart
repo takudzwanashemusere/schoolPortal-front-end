@@ -195,6 +195,38 @@ class ApiService {
     );
   }
 
+  // ── Classes ──────────────────────────────────────────────────────────────────
+
+  Future<ClassGroup> createClass(String name) async {
+    final data = await _post('/classes', {'name': name}) as Map<String, dynamic>;
+    return ClassGroup(
+      id: data['id'],
+      name: data['name'],
+      studentIds: List<String>.from(data['student_ids'] ?? []),
+      teacherIds: List<String>.from(data['teacher_ids'] ?? []),
+    );
+  }
+
+  Future<void> deleteClass(String classId) async {
+    await _delete('/classes/$classId');
+  }
+
+  // ── Students ─────────────────────────────────────────────────────────────────
+
+  Future<Student> createStudent(String name, String classId) async {
+    final data = await _post('/students', {'name': name, 'class_id': classId})
+        as Map<String, dynamic>;
+    return Student(id: data['id'], name: data['name'], classId: data['class_id']);
+  }
+
+  Future<void> deleteStudent(String studentId) async {
+    await _delete('/students/$studentId');
+  }
+
+  Future<void> updateStudentName(String studentId, String name) async {
+    await _put('/students/$studentId', {'name': name});
+  }
+
   // ── Marks ────────────────────────────────────────────────────────────────────
 
   Future<void> upsertMark(Mark mark) async {
