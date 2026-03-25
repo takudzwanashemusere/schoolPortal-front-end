@@ -1,0 +1,215 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:schoolwebsite/models/models.dart';
+
+/// Change this to your backend URL.
+/// Local dev:  http://localhost:8000
+/// Cloud workstation: https://8000-YOUR_WORKSTATION_ID.cloudworkstations.dev
+const String kApiBaseUrl = 'http://localhost:8000';
+
+class ApiException implements Exception {
+  final String message;
+  ApiException(this.message);
+  @override
+  String toString() => message;
+}
+
+class ApiService {
+  ApiService._();
+  static final ApiService instance = ApiService._();
+
+  String? _token;
+
+  void setToken(String token) => _token = token;
+  void clearToken() => _token = null;
+
+  Map<String, String> get _headers => {
+        'Content-Type': 'application/json',
+        if (_token != null) 'Authorization': 'Bearer $_token',
+      };
+
+  Future<dynamic> _post(String path, Map<String, dynamic> body) async {
+    final res = await http.post(
+      Uri.parse('$kApiBaseUrl$path'),
+      headers: _headers,
+      body: jsonEncode(body),
+    );
+    if (res.statusCode >= 200 && res.statusCode < 300) {
+      return res.body.isEmpty ? null : jsonDecode(res.body);
+    }
+    final detail = _errorDetail(res.body);
+    throw ApiException(detail);
+  }
+
+  Future<dynamic> _get(String path) async {
+    final res = await http.get(Uri.parse('$kApiBaseUrl$path'), headers: _headers);
+    if (res.statusCode >= 200 && res.statusCode < 300) {
+      return jsonDecode(res.body);
+    }
+    throw ApiException(_errorDetail(res.body));
+  }
+
+  Future<void> _delete(String path) async {
+    final res = await http.delete(Uri.parse('$kApiBaseUrl$path'), headers: _headers);
+    if (res.statusCode < 200 || res.statusCode >= 300) {
+      throw ApiException(_errorDetail(res.body));
+    }
+  }
+
+  Future<dynamic> _put(String path, Map<String, dynamic> body) async {
+    final res = await http.put(
+      Uri.parse('$kApiBaseUrl$path'),
+      headers: _headers,
+      body: jsonEncode(body),
+    );
+    if (res.statusCode >= 200 && res.statusCode < 300) {
+      return jsonDecode(res.body);
+    }
+    throw ApiException(_errorDetail(res.body));
+  }
+
+  String _errorDetail(String body) {
+    try {
+      return jsonDecode(body)['detail'] ?? 'Request failed';
+    } catch (_) {
+      return 'Request failed';
+    }
+  }
+
+  // ── Auth ────────────────────────────────────────────────────────────────────
+
+  /// Returns the token response map on success.
+  Future<Map<String, dynamic>> login(String userId, String password) async {
+    final data = await _post('/auth/login', {'user_id': userId, 'password': password});
+    return data as Map<String, dynamic>;
+  }
+
+  // ── Load all data ────────────────────────────────────────────────────────────
+
+  Future<List<Teacher>> fetchTeachers() async {
+    final data = await _get('/teachers') as List;
+    return data.map((d) => Teacher(
+          id: d['id'],
+          name: d['name'],
+          subjectIds: List<String>.from(d['subject_ids'] ?? []),
+          classIds: List<String>.from(d['class_ids'] ?? []),
+        )).toList();
+  }
+
+  Future<List<Subject>> fetchSubjects() async {
+    final data = await _get('/subjects') as List;
+    return data.map((d) => Subject(
+          id: d['id'],
+          name: d['name'],
+          teacherId: d['teacher_id'],
+        )).toList();
+  }
+
+  Future<List<ClassGroup>> fetchClasses() async {
+    final data = await _get('/classes') as List;
+    return data.map((d) => ClassGroup(
+          id: d['id'],
+          name: d['name'],
+          studentIds: List<String>.from(d['student_ids'] ?? []),
+          teacherIds: List<String>.from(d['teacher_ids'] ?? []),
+        )).toList();
+  }
+
+  Future<List<Student>> fetchStudents() async {
+    final data = await _get('/students') as List;
+    return data.map((d) => Student(
+          id: d['id'],
+          name: d['name'],
+          classId: d['class_id'],
+        )).toList();
+  }
+
+  Future<List<Mark>> fetchMarks() async {
+    final data = await _get('/marks') as List;
+    return data.map((d) => Mark(
+          studentId: d['student_id'],
+          subjectId: d['subject_id'],
+          classId: d['class_id'],
+          testMark: (d['test_mark'] as num).toDouble(),
+          examMark: (d['exam_mark'] as num).toDouble(),
+        )).toList();
+  }
+
+  Future<Set<String>> fetchSubmittedTeacherIds() async {
+    final data = await _get('/admin/submission-status') as List;
+    return data
+        .where((d) => d['submitted'] == true)
+        .map<String>((d) => d['teacher_id'] as String)
+        .toSet();
+  }
+
+  // ── Teacher CRUD ─────────────────────────────────────────────────────────────
+
+  /// Returns the auto-generated user ID (e.g. S001).
+  Future<({Teacher teacher, String userId})> createTeacher({
+    required String name,
+    required String password,
+    required List<String> subjectNames,
+    required List<String> classIds,
+  }) async {
+    final data = await _post('/teachers', {
+      'name': name,
+      'password': password,
+      'subject_names': subjectNames,
+      'class_ids': classIds,
+    }) as Map<String, dynamic>;
+
+    final t = data['teacher'] as Map<String, dynamic>;
+    final teacher = Teacher(
+      id: t['id'],
+      name: t['name'],
+      subjectIds: List<String>.from(t['subject_ids'] ?? []),
+      classIds: List<String>.from(t['class_ids'] ?? []),
+    );
+    return (teacher: teacher, userId: data['user_id'] as String);
+  }
+
+  Future<void> deleteTeacher(String teacherId) async {
+    await _delete('/teachers/$teacherId');
+  }
+
+  Future<Teacher> updateTeacherClasses(String teacherId, List<String> classIds) async {
+    final data = await _put('/teachers/$teacherId/classes', {'class_ids': classIds})
+        as Map<String, dynamic>;
+    return Teacher(
+      id: data['id'],
+      name: data['name'],
+      subjectIds: List<String>.from(data['subject_ids'] ?? []),
+      classIds: List<String>.from(data['class_ids'] ?? []),
+    );
+  }
+
+  Future<Teacher> updateTeacherSubjects(String teacherId, List<String> subjectIds) async {
+    final data = await _put('/teachers/$teacherId/subjects', {'subject_ids': subjectIds})
+        as Map<String, dynamic>;
+    return Teacher(
+      id: data['id'],
+      name: data['name'],
+      subjectIds: List<String>.from(data['subject_ids'] ?? []),
+      classIds: List<String>.from(data['class_ids'] ?? []),
+    );
+  }
+
+  // ── Marks ────────────────────────────────────────────────────────────────────
+
+  Future<void> upsertMark(Mark mark) async {
+    await _post('/marks', {
+      'student_id': mark.studentId,
+      'subject_id': mark.subjectId,
+      'class_id': mark.classId,
+      'test_mark': mark.testMark,
+      'exam_mark': mark.examMark,
+    });
+  }
+
+  // ── Submissions ──────────────────────────────────────────────────────────────
+
+  Future<void> markTeacherSubmitted(String teacherId) async {
+    await _post('/admin/submission/$teacherId', {});
+  }
+}

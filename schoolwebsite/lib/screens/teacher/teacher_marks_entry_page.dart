@@ -320,7 +320,7 @@ class _MarksTableState extends State<_MarksTable> {
     return 'F';
   }
 
-  void _saveMarks() {
+  Future<void> _saveMarks() async {
     final state = AppStateProvider.read(context);
     bool hasErrors = false;
 
@@ -360,8 +360,9 @@ class _MarksTableState extends State<_MarksTable> {
       ));
     }
 
-    state.markTeacherSubmitted(widget.teacherId);
+    await state.markTeacherSubmitted(widget.teacherId);
 
+    if (!mounted) return;
     if (hasErrors) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(

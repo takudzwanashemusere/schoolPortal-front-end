@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:schoolwebsite/models/models.dart';
 import 'package:schoolwebsite/data/mock_data.dart';
+import 'package:schoolwebsite/services/api_service.dart';
 
 class AppState extends ChangeNotifier {
   // ─── Auth ───────────────────────────────────────────────────────────────────
@@ -30,6 +31,10 @@ class AppState extends ChangeNotifier {
   Set<String> get submittedTeacherIds => Set.unmodifiable(_submittedTeacherIds);
   List<ClassGroup> get classes => List.unmodifiable(_classes);
 
+  // ─── Loading state ──────────────────────────────────────────────────────────
+  bool _isLoading = false;
+  bool get isLoading => _isLoading;
+
   // ─── Navigation (per role) ──────────────────────────────────────────────────
   int _adminPageIndex = 0;
   int _teacherPageIndex = 0;
@@ -41,26 +46,54 @@ class AppState extends ChangeNotifier {
 
   AppState() {
     _users = List<AppUser>.from(mockUsers);
-    _teachers = mockTeachers
-        .map((t) => Teacher(
-              id: t.id,
-              name: t.name,
-              subjectIds: List<String>.from(t.subjectIds),
-              classIds: List<String>.from(t.classIds),
-            ))
-        .toList();
-    _subjects = List<Subject>.from(mockSubjects);
-    _classes = mockClasses
-        .map((c) => ClassGroup(
-              id: c.id,
-              name: c.name,
-              studentIds: List<String>.from(c.studentIds),
-              teacherIds: List<String>.from(c.teacherIds),
-            ))
-        .toList();
+    _teachers = [];
+    _subjects = [];
+    _classes = List<ClassGroup>.from(mockClasses.map((c) => ClassGroup(
+          id: c.id,
+          name: c.name,
+          studentIds: List<String>.from(c.studentIds),
+          teacherIds: List<String>.from(c.teacherIds),
+        )));
     _students = List<Student>.from(mockStudents);
     _marks = List<Mark>.from(initialMarks);
-    _submittedTeacherIds = Set<String>.from(initialSubmittedTeacherIds);
+    _submittedTeacherIds = {};
+  }
+
+  // ── Load all live data from the API (called after login) ────────────────────
+  Future<void> _loadFromApi() async {
+    final api = ApiService.instance;
+    try {
+      final results = await Future.wait([
+        api.fetchTeachers(),
+        api.fetchSubjects(),
+        api.fetchClasses(),
+        api.fetchStudents(),
+        api.fetchMarks(),
+        api.fetchSubmittedTeacherIds(),
+      ]);
+      _teachers = results[0] as List<Teacher>;
+      _subjects = results[1] as List<Subject>;
+      _classes = results[2] as List<ClassGroup>;
+      _students = results[3] as List<Student>;
+      _marks = results[4] as List<Mark>;
+      _submittedTeacherIds = results[5] as Set<String>;
+    } catch (_) {
+      // Fall back to mock data if API unreachable
+      _teachers = mockTeachers.map((t) => Teacher(
+            id: t.id, name: t.name,
+            subjectIds: List<String>.from(t.subjectIds),
+            classIds: List<String>.from(t.classIds),
+          )).toList();
+      _subjects = List<Subject>.from(mockSubjects);
+      _classes = mockClasses.map((c) => ClassGroup(
+            id: c.id, name: c.name,
+            studentIds: List<String>.from(c.studentIds),
+            teacherIds: List<String>.from(c.teacherIds),
+          )).toList();
+      _students = List<Student>.from(mockStudents);
+      _marks = List<Mark>.from(initialMarks);
+      _submittedTeacherIds = Set<String>.from(initialSubmittedTeacherIds);
+    }
   }
 
   // ─── Auth methods ───────────────────────────────────────────────────────────
@@ -82,20 +115,57 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  /// Login that also validates the user belongs to the expected role.
-  bool loginAsRole(String userId, String password, String role) {
+  /// Async login — validates against the backend API.
+  /// Falls back to mock data if the backend is unreachable.
+  Future<bool> loginAsRoleAsync(String userId, String password, String role) async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      final data = await ApiService.instance.login(userId, password);
+      final serverRole = data['role'] as String;
+      if (serverRole != role) {
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+      ApiService.instance.setToken(data['access_token'] as String);
+
+      // Build current user from the API response
+      _currentUser = AppUser(
+        id: data['user_id'] as String,
+        name: data['name'] as String,
+        role: UserRole.values.firstWhere((r) => r.name == serverRole),
+        password: '',
+        linkedId: data['linked_id'] as String?,
+      );
+      _adminPageIndex = 0;
+      _teacherPageIndex = 0;
+      _studentPageIndex = 0;
+
+      await _loadFromApi();
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (_) {
+      // Fall back to mock login
+      _isLoading = false;
+      final result = _mockLoginAsRole(userId, password, role);
+      if (result) await _loadFromApi();
+      notifyListeners();
+      return result;
+    }
+  }
+
+  bool _mockLoginAsRole(String userId, String password, String role) {
     try {
       final user = _users.firstWhere((u) => u.id == userId);
       if (user.role.name != role) return false;
-      if (user.password == password) {
-        _currentUser = user;
-        _adminPageIndex = 0;
-        _teacherPageIndex = 0;
-        _studentPageIndex = 0;
-        notifyListeners();
-        return true;
-      }
-      return false;
+      if (user.password != password) return false;
+      _currentUser = user;
+      _adminPageIndex = 0;
+      _teacherPageIndex = 0;
+      _studentPageIndex = 0;
+      return true;
     } catch (_) {
       return false;
     }
@@ -103,6 +173,7 @@ class AppState extends ChangeNotifier {
 
   void logout() {
     _currentUser = null;
+    ApiService.instance.clearToken();
     notifyListeners();
   }
 
@@ -147,7 +218,8 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void markTeacherSubmitted(String teacherId) {
+  Future<void> markTeacherSubmitted(String teacherId) async {
+    await ApiService.instance.markTeacherSubmitted(teacherId);
     _submittedTeacherIds.add(teacherId);
     notifyListeners();
   }
@@ -275,21 +347,19 @@ class AppState extends ChangeNotifier {
     return graduatingStudentIds.length;
   }
 
-  void deleteTeacher(String teacherId) {
-    // Remove the teacher's subjects
+  Future<void> deleteTeacher(String teacherId) async {
     final teacher = _teachers.firstWhere(
       (t) => t.id == teacherId,
       orElse: () => const Teacher(id: '', name: '', subjectIds: [], classIds: []),
     );
     if (teacher.id.isEmpty) return;
+
+    await ApiService.instance.deleteTeacher(teacherId);
+
     _subjects.removeWhere((s) => teacher.subjectIds.contains(s.id));
-    // Remove teacher's marks
     _marks.removeWhere((m) => teacher.subjectIds.contains(m.subjectId));
-    // Remove submission record
     _submittedTeacherIds.remove(teacherId);
-    // Remove the teacher
     _teachers.removeWhere((t) => t.id == teacherId);
-    // Remove their login account
     _users.removeWhere((u) => u.linkedId == teacherId);
     notifyListeners();
   }
@@ -304,73 +374,58 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  void setTeacherClasses(String teacherId, List<String> classIds) {
+  Future<void> setTeacherClasses(String teacherId, List<String> classIds) async {
+    final updated = await ApiService.instance.updateTeacherClasses(teacherId, classIds);
     final index = _teachers.indexWhere((t) => t.id == teacherId);
     if (index >= 0) {
-      _teachers[index] = _teachers[index].copyWith(classIds: classIds);
+      _teachers[index] = updated;
       notifyListeners();
     }
   }
 
-  void setTeacherSubjects(String teacherId, List<String> subjectIds) {
+  Future<void> setTeacherSubjects(String teacherId, List<String> subjectIds) async {
+    final updated = await ApiService.instance.updateTeacherSubjects(teacherId, subjectIds);
     final index = _teachers.indexWhere((t) => t.id == teacherId);
     if (index >= 0) {
-      _teachers[index] = _teachers[index].copyWith(subjectIds: subjectIds);
+      _teachers[index] = updated;
       notifyListeners();
     }
   }
 
   /// Add a brand-new teacher, their subjects, and a login account.
-  /// Generates the lowest available teacher login ID in the format S001, S002, …
-  /// Freed IDs (from deleted teachers) are reused.
-  String _nextTeacherUserId() {
-    final used = _users
-        .map((u) => u.id)
-        .where((id) => RegExp(r'^S\d+$').hasMatch(id))
-        .map((id) => int.parse(id.substring(1)))
-        .toSet();
-    int n = 1;
-    while (used.contains(n)) {
-      n++;
-    }
-    return 'S${n.toString().padLeft(3, '0')}';
-  }
-
-  /// Adds a teacher and returns the auto-generated User ID.
-  String addTeacher({
+/// Adds a teacher and returns the auto-generated User ID.
+  Future<String> addTeacher({
     required String name,
     required String password,
     required List<String> subjectNames,
     required List<String> classIds,
-  }) {
-    final ts = DateTime.now().millisecondsSinceEpoch;
-    final teacherId = 't_$ts';
-    final userId = _nextTeacherUserId();
-
-    final newSubjectIds = <String>[];
-    for (var i = 0; i < subjectNames.length; i++) {
-      final subId = 'sub_${ts}_$i';
-      _subjects.add(Subject(id: subId, name: subjectNames[i], teacherId: teacherId));
-      newSubjectIds.add(subId);
-    }
-
-    _teachers.add(Teacher(
-      id: teacherId,
+  }) async {
+    final result = await ApiService.instance.createTeacher(
       name: name,
-      subjectIds: newSubjectIds,
+      password: password,
+      subjectNames: subjectNames,
       classIds: classIds,
-    ));
+    );
+
+    _teachers.add(result.teacher);
+
+    // Add the new subjects to local state
+    final newSubjects = result.teacher.subjectIds.asMap().entries.map((e) {
+      final name = subjectNames.length > e.key ? subjectNames[e.key] : '';
+      return Subject(id: e.value, name: name, teacherId: result.teacher.id);
+    }).toList();
+    _subjects.addAll(newSubjects);
 
     _users.add(AppUser(
-      id: userId,
+      id: result.userId,
       name: name,
       role: UserRole.teacher,
-      password: password,
-      linkedId: teacherId,
+      password: '',
+      linkedId: result.teacher.id,
     ));
 
     notifyListeners();
-    return userId;
+    return result.userId;
   }
 
   Subject? getSubject(String subjectId) {

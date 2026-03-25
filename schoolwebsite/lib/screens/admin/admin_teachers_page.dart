@@ -163,7 +163,7 @@ class AdminTeachersPage extends StatelessWidget {
               child: const Text('Cancel'),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 final name = nameCtrl.text.trim();
                 final password = passwordCtrl.text.trim();
                 final subjectNames = subjectControllers
@@ -179,12 +179,13 @@ class AdminTeachersPage extends StatelessWidget {
                   return;
                 }
 
-                final assignedId = AppStateProvider.read(context).addTeacher(
+                final assignedId = await AppStateProvider.read(context).addTeacher(
                   name: name,
                   password: password,
                   subjectNames: subjectNames,
                   classIds: selectedClassIds.toList(),
                 );
+                if (!ctx.mounted) return;
                 Navigator.of(ctx).pop();
 
                 // Show the assigned ID so the admin can note it down
@@ -336,9 +337,10 @@ class _TeacherAssignmentCardState extends State<_TeacherAssignmentCard> {
               backgroundColor: AppTheme.error,
               foregroundColor: Colors.white,
             ),
-            onPressed: () {
-              AppStateProvider.read(context)
+            onPressed: () async {
+              await AppStateProvider.read(context)
                   .deleteTeacher(widget.teacher.id);
+              if (!ctx.mounted) return;
               Navigator.of(ctx).pop();
             },
             child: const Text('Delete'),
@@ -383,8 +385,9 @@ class _TeacherAssignmentCardState extends State<_TeacherAssignmentCard> {
               child: const Text('Cancel'),
             ),
             ElevatedButton(
-              onPressed: () {
-                state.setTeacherClasses(widget.teacher.id, selected.toList());
+              onPressed: () async {
+                await state.setTeacherClasses(widget.teacher.id, selected.toList());
+                if (!ctx.mounted) return;
                 Navigator.of(ctx).pop();
               },
               child: const Text('Save'),
@@ -430,8 +433,9 @@ class _TeacherAssignmentCardState extends State<_TeacherAssignmentCard> {
               child: const Text('Cancel'),
             ),
             ElevatedButton(
-              onPressed: () {
-                state.setTeacherSubjects(widget.teacher.id, selected.toList());
+              onPressed: () async {
+                await state.setTeacherSubjects(widget.teacher.id, selected.toList());
+                if (!ctx.mounted) return;
                 Navigator.of(ctx).pop();
               },
               child: const Text('Save'),

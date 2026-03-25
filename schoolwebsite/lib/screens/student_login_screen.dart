@@ -22,7 +22,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
     super.dispose();
   }
 
-  void _login() {
+  Future<void> _login() async {
     final userId = _userIdController.text.trim();
     final password = _passwordController.text.trim();
 
@@ -36,7 +36,8 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
     }
 
     final state = AppStateProvider.read(context);
-    final success = state.loginAsRole(userId, password, 'student');
+    final success = await state.loginAsRoleAsync(userId, password, 'student');
+    if (!mounted) return;
     if (success) {
       Navigator.of(context).popUntil((route) => route.isFirst);
     } else {

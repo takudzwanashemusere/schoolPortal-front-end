@@ -48,6 +48,26 @@ class TeacherResponse(BaseModel):
     class_ids: list[str] = []
 
 
+class TeacherCreateRequest(BaseModel):
+    name: str
+    password: str
+    subject_names: list[str] = []
+    class_ids: list[str] = []
+
+
+class TeacherCreateResponse(BaseModel):
+    teacher: TeacherResponse
+    user_id: str
+
+
+class TeacherUpdateClassesRequest(BaseModel):
+    class_ids: list[str]
+
+
+class TeacherUpdateSubjectsRequest(BaseModel):
+    subject_ids: list[str]
+
+
 class TeacherPassRateResponse(BaseModel):
     teacher_id: str
     teacher_name: str

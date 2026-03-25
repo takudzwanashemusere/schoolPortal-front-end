@@ -34,7 +34,7 @@ class _StaffLoginScreenState extends State<StaffLoginScreen> {
     });
   }
 
-  void _login() {
+  Future<void> _login() async {
     final userId = _userIdController.text.trim();
     final password = _passwordController.text.trim();
 
@@ -48,7 +48,8 @@ class _StaffLoginScreenState extends State<StaffLoginScreen> {
     }
 
     final state = AppStateProvider.read(context);
-    final success = state.loginAsRole(userId, password, _selectedRole.name);
+    final success = await state.loginAsRoleAsync(userId, password, _selectedRole.name);
+    if (!mounted) return;
     if (success) {
       Navigator.of(context).popUntil((route) => route.isFirst);
     } else {

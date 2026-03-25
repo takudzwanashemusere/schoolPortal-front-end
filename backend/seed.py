@@ -135,7 +135,7 @@ async def seed_database(db: AsyncIOMotorDatabase) -> None:
 
     # ── 7. App users ───────────────────────────────────────────────────────────
     await db["users"].insert_many([
-        {"_id":"u0",  "name":"Dr. James Banda",    "role":"admin",
+        {"_id":"5829A","name":"Dr. T Musere",       "role":"admin",
          "hashed_password":_hash("admin123"),   "linked_id": None},
         {"_id":"u1",  "name":"Mr. Patrick Mwale",  "role":"teacher",
          "hashed_password":_hash("teacher123"), "linked_id":"t1"},
