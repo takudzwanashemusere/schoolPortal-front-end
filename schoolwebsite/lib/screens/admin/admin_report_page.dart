@@ -78,8 +78,9 @@ class _AdminReportPageState extends State<AdminReportPage> {
   Widget build(BuildContext context) {
     AppStateProvider.of(context); // listen for rebuilds
 
+    final isMobile = MediaQuery.of(context).size.width < 600;
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(32),
+      padding: EdgeInsets.all(isMobile ? 16 : 32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

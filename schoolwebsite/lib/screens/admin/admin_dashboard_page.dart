@@ -17,8 +17,10 @@ class AdminDashboardPage extends StatelessWidget {
         .toList();
     final totalStudents = state.students.length;
 
+    final isMobile = MediaQuery.of(context).size.width < 600;
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(32),
+      padding: EdgeInsets.all(isMobile ? 16 : 32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -35,47 +37,30 @@ class AdminDashboardPage extends StatelessWidget {
           const SizedBox(height: 28),
 
           // ── Stat cards ───────────────────────────────────────────────────
-          Row(
-            children: [
-              Expanded(
-                child: StatCard(
-                  label: 'Total Students',
-                  value: '$totalStudents',
-                  subtitle: 'Across all classes',
-                  accentColor: AppTheme.primaryLight,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: StatCard(
-                  label: 'Total Teachers',
-                  value: '${teachers.length}',
-                  subtitle: '${teachers.length} active',
-                  accentColor: const Color(0xFF0891B2),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: StatCard(
-                  label: 'Classes',
-                  value: '${state.classes.length}',
-                  subtitle: '${state.classes.length} active',
-                  accentColor: const Color(0xFF7C3AED),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: StatCard(
-                  label: 'Marks Submitted',
-                  value: '$submittedCount / ${teachers.length}',
-                  subtitle: 'teachers have submitted',
-                  accentColor: submittedCount == teachers.length
-                      ? AppTheme.success
-                      : AppTheme.warning,
-                ),
-              ),
-            ],
-          ),
+          if (isMobile) ...[
+            Row(children: [
+              Expanded(child: StatCard(label: 'Total Students', value: '$totalStudents', subtitle: 'Across all classes', accentColor: AppTheme.primaryLight)),
+              const SizedBox(width: 12),
+              Expanded(child: StatCard(label: 'Total Teachers', value: '${teachers.length}', subtitle: '${teachers.length} active', accentColor: const Color(0xFF0891B2))),
+            ]),
+            const SizedBox(height: 12),
+            Row(children: [
+              Expanded(child: StatCard(label: 'Classes', value: '${state.classes.length}', subtitle: '${state.classes.length} active', accentColor: const Color(0xFF7C3AED))),
+              const SizedBox(width: 12),
+              Expanded(child: StatCard(label: 'Marks Submitted', value: '$submittedCount / ${teachers.length}', subtitle: 'teachers submitted', accentColor: submittedCount == teachers.length ? AppTheme.success : AppTheme.warning)),
+            ]),
+          ] else
+            Row(
+              children: [
+                Expanded(child: StatCard(label: 'Total Students', value: '$totalStudents', subtitle: 'Across all classes', accentColor: AppTheme.primaryLight)),
+                const SizedBox(width: 16),
+                Expanded(child: StatCard(label: 'Total Teachers', value: '${teachers.length}', subtitle: '${teachers.length} active', accentColor: const Color(0xFF0891B2))),
+                const SizedBox(width: 16),
+                Expanded(child: StatCard(label: 'Classes', value: '${state.classes.length}', subtitle: '${state.classes.length} active', accentColor: const Color(0xFF7C3AED))),
+                const SizedBox(width: 16),
+                Expanded(child: StatCard(label: 'Marks Submitted', value: '$submittedCount / ${teachers.length}', subtitle: 'teachers have submitted', accentColor: submittedCount == teachers.length ? AppTheme.success : AppTheme.warning)),
+              ],
+            ),
           const SizedBox(height: 32),
 
           // ── Teacher submission status ────────────────────────────────────

@@ -23,8 +23,9 @@ class AdminAnalyticsPage extends StatelessWidget {
         : submitted.map((d) => d.rate).reduce((a, b) => a + b) /
             submitted.length;
 
+    final isMobile = MediaQuery.of(context).size.width < 600;
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(32),
+      padding: EdgeInsets.all(isMobile ? 16 : 32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

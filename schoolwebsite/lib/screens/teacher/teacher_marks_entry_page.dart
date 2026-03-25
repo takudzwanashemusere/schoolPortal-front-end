@@ -32,9 +32,10 @@ class _TeacherMarksEntryPageState extends State<TeacherMarksEntryPage> {
 
     final canShowTable =
         _selectedClassId != null && _selectedSubjectId != null;
+    final isMobile = MediaQuery.of(context).size.width < 600;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(32),
+      padding: EdgeInsets.all(isMobile ? 16 : 32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

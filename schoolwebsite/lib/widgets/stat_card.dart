@@ -161,6 +161,25 @@ class AppTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Min width: 80px per column so tables scroll horizontally on mobile
+        final minWidth = headers.length * 80.0;
+        if (constraints.maxWidth < minWidth) {
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minWidth: minWidth),
+              child: _buildTable(),
+            ),
+          );
+        }
+        return _buildTable();
+      },
+    );
+  }
+
+  Widget _buildTable() {
     return Container(
       decoration: BoxDecoration(
         color: AppTheme.surface,

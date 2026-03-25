@@ -36,8 +36,10 @@ class TeacherDashboardPage extends StatelessWidget {
         cls.id: _classHasMarks(state, cls, teacher),
     };
 
+    final isMobile = MediaQuery.of(context).size.width < 600;
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(32),
+      padding: EdgeInsets.all(isMobile ? 16 : 32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -92,36 +94,24 @@ class TeacherDashboardPage extends StatelessWidget {
           const SizedBox(height: 24),
 
           // ── Stat cards ───────────────────────────────────────────────────
-          Row(
-            children: [
-              Expanded(
-                child: StatCard(
-                  label: 'Assigned Subjects',
-                  value: '${subjects.length}',
-                  subtitle: subjects.map((s) => s.name).join(', '),
-                  accentColor: AppTheme.primaryLight,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: StatCard(
-                  label: 'Assigned Classes',
-                  value: '${classes.length}',
-                  subtitle: classes.map((c) => c.name).join(', '),
-                  accentColor: const Color(0xFF7C3AED),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: StatCard(
-                  label: 'Total Students',
-                  value: '$totalStudents',
-                  subtitle: 'Across all your classes',
-                  accentColor: const Color(0xFF0891B2),
-                ),
-              ),
-            ],
-          ),
+          if (isMobile) ...[
+            StatCard(label: 'Assigned Subjects', value: '${subjects.length}', subtitle: subjects.map((s) => s.name).join(', '), accentColor: AppTheme.primaryLight),
+            const SizedBox(height: 12),
+            Row(children: [
+              Expanded(child: StatCard(label: 'Assigned Classes', value: '${classes.length}', subtitle: classes.map((c) => c.name).join(', '), accentColor: const Color(0xFF7C3AED))),
+              const SizedBox(width: 12),
+              Expanded(child: StatCard(label: 'Total Students', value: '$totalStudents', subtitle: 'Across all your classes', accentColor: const Color(0xFF0891B2))),
+            ]),
+          ] else
+            Row(
+              children: [
+                Expanded(child: StatCard(label: 'Assigned Subjects', value: '${subjects.length}', subtitle: subjects.map((s) => s.name).join(', '), accentColor: AppTheme.primaryLight)),
+                const SizedBox(width: 16),
+                Expanded(child: StatCard(label: 'Assigned Classes', value: '${classes.length}', subtitle: classes.map((c) => c.name).join(', '), accentColor: const Color(0xFF7C3AED))),
+                const SizedBox(width: 16),
+                Expanded(child: StatCard(label: 'Total Students', value: '$totalStudents', subtitle: 'Across all your classes', accentColor: const Color(0xFF0891B2))),
+              ],
+            ),
           const SizedBox(height: 32),
 
           // ── Subjects table ───────────────────────────────────────────────
