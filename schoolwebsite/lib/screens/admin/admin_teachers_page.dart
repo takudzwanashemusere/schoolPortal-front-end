@@ -9,7 +9,6 @@ class AdminTeachersPage extends StatelessWidget {
   void _showAddTeacherDialog(BuildContext context) {
     final state = AppStateProvider.read(context);
     final nameCtrl = TextEditingController();
-    final userIdCtrl = TextEditingController();
     final passwordCtrl = TextEditingController();
     final subjectControllers = <TextEditingController>[TextEditingController()];
     final selectedClassIds = <String>{};
@@ -27,6 +26,33 @@ class AdminTeachersPage extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // ── Auto-ID notice ───────────────────────────────────────
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEFF6FF),
+                      borderRadius: BorderRadius.circular(6),
+                      border: const Border.fromBorderSide(
+                          BorderSide(color: Color(0xFFBFDBFE))),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.info_outline_rounded,
+                            size: 16, color: AppTheme.primaryLight),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'A unique User ID (S001, S002…) will be assigned automatically.',
+                            style: TextStyle(
+                                fontSize: 12, color: AppTheme.primaryLight),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
                   // ── Personal info ────────────────────────────────────────
                   const Text('Teacher Details', style: AppTheme.heading3),
                   const SizedBox(height: 12),
@@ -36,15 +62,6 @@ class AdminTeachersPage extends StatelessWidget {
                     decoration: const InputDecoration(
                       labelText: 'Full Name *',
                       hintText: 'e.g. Mr. John Phiri',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: userIdCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'User ID *',
-                      hintText: 'e.g. TCH005  (used to log in)',
                       border: OutlineInputBorder(),
                     ),
                   ),
@@ -148,43 +165,84 @@ class AdminTeachersPage extends StatelessWidget {
             ElevatedButton(
               onPressed: () {
                 final name = nameCtrl.text.trim();
-                final userId = userIdCtrl.text.trim();
                 final password = passwordCtrl.text.trim();
                 final subjectNames = subjectControllers
                     .map((c) => c.text.trim())
                     .where((s) => s.isNotEmpty)
                     .toList();
 
-                if (name.isEmpty || userId.isEmpty || password.isEmpty) {
+                if (name.isEmpty || password.isEmpty) {
                   ScaffoldMessenger.of(ctx).showSnackBar(
                     const SnackBar(
-                        content: Text(
-                            'Name, User ID and Password are required.')),
+                        content: Text('Name and Password are required.')),
                   );
                   return;
                 }
 
-                final existingIds = AppStateProvider.read(context)
-                    .users
-                    .map((u) => u.id)
-                    .toSet();
-                if (existingIds.contains(userId)) {
-                  ScaffoldMessenger.of(ctx).showSnackBar(
-                    SnackBar(
-                        content: Text(
-                            'User ID "$userId" is already taken.')),
-                  );
-                  return;
-                }
-
-                AppStateProvider.read(context).addTeacher(
+                final assignedId = AppStateProvider.read(context).addTeacher(
                   name: name,
-                  userId: userId,
                   password: password,
                   subjectNames: subjectNames,
                   classIds: selectedClassIds.toList(),
                 );
                 Navigator.of(ctx).pop();
+
+                // Show the assigned ID so the admin can note it down
+                showDialog(
+                  context: context,
+                  builder: (_) => AlertDialog(
+                    title: const Text('Teacher Added'),
+                    content: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('$name has been added successfully.'),
+                        const SizedBox(height: 16),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEFF6FF),
+                            borderRadius: BorderRadius.circular(8),
+                            border: const Border.fromBorderSide(
+                                BorderSide(color: Color(0xFFBFDBFE))),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Assigned User ID',
+                                  style: TextStyle(
+                                      fontSize: 11,
+                                      color: AppTheme.textSecondary)),
+                              const SizedBox(height: 4),
+                              Text(
+                                assignedId,
+                                style: const TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppTheme.primary,
+                                    letterSpacing: 2),
+                              ),
+                              const SizedBox(height: 4),
+                              const Text(
+                                'Share this ID with the teacher so they can log in.',
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    color: AppTheme.textSecondary),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    actions: [
+                      ElevatedButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: const Text('Done'),
+                      ),
+                    ],
+                  ),
+                );
               },
               child: const Text('Add Teacher'),
             ),

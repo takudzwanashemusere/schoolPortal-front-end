@@ -58,3 +58,13 @@ Student (Bupe)	u7	student123
 
  admin user iD = 5829A /////////////updated version 
  password = admin123
+
+Student Id is C001 zvichienda zvakadaro 
+
+ Option 1 — MongoDB Compass (Visual, easiest)
+Open MongoDB Compass from your Start menu
+In the connection string box, enter:
+
+mongodb://localhost:27017
+Click Connect
+You'll see your database listed — look for school_portal

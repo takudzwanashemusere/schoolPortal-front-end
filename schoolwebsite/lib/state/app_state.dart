@@ -321,15 +321,31 @@ class AppState extends ChangeNotifier {
   }
 
   /// Add a brand-new teacher, their subjects, and a login account.
-  void addTeacher({
+  /// Generates the lowest available teacher login ID in the format S001, S002, …
+  /// Freed IDs (from deleted teachers) are reused.
+  String _nextTeacherUserId() {
+    final used = _users
+        .map((u) => u.id)
+        .where((id) => RegExp(r'^S\d+$').hasMatch(id))
+        .map((id) => int.parse(id.substring(1)))
+        .toSet();
+    int n = 1;
+    while (used.contains(n)) {
+      n++;
+    }
+    return 'S${n.toString().padLeft(3, '0')}';
+  }
+
+  /// Adds a teacher and returns the auto-generated User ID.
+  String addTeacher({
     required String name,
-    required String userId,
     required String password,
     required List<String> subjectNames,
     required List<String> classIds,
   }) {
     final ts = DateTime.now().millisecondsSinceEpoch;
     final teacherId = 't_$ts';
+    final userId = _nextTeacherUserId();
 
     final newSubjectIds = <String>[];
     for (var i = 0; i < subjectNames.length; i++) {
@@ -354,6 +370,7 @@ class AppState extends ChangeNotifier {
     ));
 
     notifyListeners();
+    return userId;
   }
 
   Subject? getSubject(String subjectId) {
