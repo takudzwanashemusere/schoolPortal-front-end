@@ -77,3 +77,6 @@ connection method = mongodb+srv://musere2002_db_user:3sRh5FqmsMFfeYjW@cluster0.d
 
 
 networking URL = schoolportal-front-end.railway.internal
+
+
+integrate with payment methods like eco cash 
