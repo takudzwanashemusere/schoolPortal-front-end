@@ -83,3 +83,5 @@ integrate with payment methods like eco cash
  it should also be showing amount of fees paid by student on the portal also 
 
  also add position of a student  and there should be a signature in  each student's portal  
+
+ on the landing page there should be an option were students apply for the  school enrollment  anytime  of the year 
