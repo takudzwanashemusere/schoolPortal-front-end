@@ -81,3 +81,5 @@ networking URL = schoolportal-front-end.railway.internal
 
 integrate with payment methods like eco cash 
  it should also be showing amount of fees paid by student on the portal also 
+
+ also add position of a student  and there should be a signature in  each student's portal  
