@@ -87,7 +87,7 @@ class ApiService {
   // ── Load all data ────────────────────────────────────────────────────────────
 
   Future<List<Teacher>> fetchTeachers() async {
-    final data = await _get('/teachers') as List;
+    final data = await _get('/teachers/') as List;
     return data.map((d) => Teacher(
           id: d['id'],
           name: d['name'],
@@ -97,7 +97,7 @@ class ApiService {
   }
 
   Future<List<Subject>> fetchSubjects() async {
-    final data = await _get('/subjects') as List;
+    final data = await _get('/subjects/') as List;
     return data.map((d) => Subject(
           id: d['id'],
           name: d['name'],
@@ -106,7 +106,7 @@ class ApiService {
   }
 
   Future<List<ClassGroup>> fetchClasses() async {
-    final data = await _get('/classes') as List;
+    final data = await _get('/classes/') as List;
     return data.map((d) => ClassGroup(
           id: d['id'],
           name: d['name'],
@@ -116,7 +116,7 @@ class ApiService {
   }
 
   Future<List<Student>> fetchStudents() async {
-    final data = await _get('/students') as List;
+    final data = await _get('/students/') as List;
     return data.map((d) => Student(
           id: d['id'],
           name: d['name'],
@@ -125,7 +125,7 @@ class ApiService {
   }
 
   Future<List<Mark>> fetchMarks() async {
-    final data = await _get('/marks') as List;
+    final data = await _get('/marks/') as List;
     return data.map((d) => Mark(
           studentId: d['student_id'],
           subjectId: d['subject_id'],
