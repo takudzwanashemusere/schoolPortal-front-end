@@ -114,10 +114,21 @@ class _AdminClassesPageState extends State<AdminClassesPage> {
               foregroundColor: Colors.white,
             ),
             onPressed: () async {
-              await AppStateProvider.read(context).deleteClass(classId);
-              if (!ctx.mounted) return;
-              Navigator.of(ctx).pop();
-              setState(() => _expandedClassId = null);
+              try {
+                await AppStateProvider.read(context).deleteClass(classId);
+                if (!ctx.mounted) return;
+                Navigator.of(ctx).pop();
+                setState(() => _expandedClassId = null);
+              } catch (e) {
+                if (!ctx.mounted) return;
+                Navigator.of(ctx).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Failed to delete class: $e'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
             },
             child: const Text('Delete'),
           ),
@@ -151,9 +162,20 @@ class _AdminClassesPageState extends State<AdminClassesPage> {
             onPressed: () async {
               final name = nameController.text.trim();
               if (name.isEmpty) return;
-              await AppStateProvider.read(context).addClass(name);
-              if (!ctx.mounted) return;
-              Navigator.of(ctx).pop();
+              try {
+                await AppStateProvider.read(context).addClass(name);
+                if (!ctx.mounted) return;
+                Navigator.of(ctx).pop();
+              } catch (e) {
+                if (!ctx.mounted) return;
+                Navigator.of(ctx).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Failed to add class: $e'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
             },
             child: const Text('Add Class'),
           ),
@@ -187,9 +209,20 @@ class _AdminClassesPageState extends State<AdminClassesPage> {
             onPressed: () async {
               final name = nameController.text.trim();
               if (name.isEmpty) return;
-              await AppStateProvider.read(context).addStudent(name, classId);
-              if (!ctx.mounted) return;
-              Navigator.of(ctx).pop();
+              try {
+                await AppStateProvider.read(context).addStudent(name, classId);
+                if (!ctx.mounted) return;
+                Navigator.of(ctx).pop();
+              } catch (e) {
+                if (!ctx.mounted) return;
+                Navigator.of(ctx).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Failed to add student: $e'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
             },
             child: const Text('Add'),
           ),

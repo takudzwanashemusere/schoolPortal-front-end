@@ -16,7 +16,9 @@
       "Bash(find c:/Users/pc/OneDrive/Desktop/schoolPortal/schoolwebsite -name google-services.json -o -name GoogleService-Info.plist -o -name *firebase*)",
       "Bash(grep -r \"MONGO\\\\|mongodb\\\\|http\\\\|localhost\\\\|api\" /c/Users/pc/OneDrive/Desktop/schoolPortal --include=*.py --include=.env*)",
       "Bash(flutter pub:*)",
-      "Bash(flutter analyze:*)"
+      "Bash(flutter analyze:*)",
+      "Bash(flutter build:*)",
+      "Bash(firebase deploy:*)"
     ]
   }
 }

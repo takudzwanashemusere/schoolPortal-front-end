@@ -179,12 +179,24 @@ class AdminTeachersPage extends StatelessWidget {
                   return;
                 }
 
-                final assignedId = await AppStateProvider.read(context).addTeacher(
-                  name: name,
-                  password: password,
-                  subjectNames: subjectNames,
-                  classIds: selectedClassIds.toList(),
-                );
+                String assignedId;
+                try {
+                  assignedId = await AppStateProvider.read(context).addTeacher(
+                    name: name,
+                    password: password,
+                    subjectNames: subjectNames,
+                    classIds: selectedClassIds.toList(),
+                  );
+                } catch (e) {
+                  if (!ctx.mounted) return;
+                  ScaffoldMessenger.of(ctx).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to add teacher: $e'),
+                      backgroundColor: AppTheme.error,
+                    ),
+                  );
+                  return;
+                }
                 if (!ctx.mounted) return;
                 Navigator.of(ctx).pop();
 
@@ -339,10 +351,21 @@ class _TeacherAssignmentCardState extends State<_TeacherAssignmentCard> {
               foregroundColor: Colors.white,
             ),
             onPressed: () async {
-              await AppStateProvider.read(context)
-                  .deleteTeacher(widget.teacher.id);
-              if (!ctx.mounted) return;
-              Navigator.of(ctx).pop();
+              try {
+                await AppStateProvider.read(ctx)
+                    .deleteTeacher(widget.teacher.id);
+                if (!ctx.mounted) return;
+                Navigator.of(ctx).pop();
+              } catch (e) {
+                if (!ctx.mounted) return;
+                Navigator.of(ctx).pop();
+                ScaffoldMessenger.of(ctx).showSnackBar(
+                  SnackBar(
+                    content: Text('Failed to delete teacher: $e'),
+                    backgroundColor: AppTheme.error,
+                  ),
+                );
+              }
             },
             child: const Text('Delete'),
           ),
@@ -387,9 +410,17 @@ class _TeacherAssignmentCardState extends State<_TeacherAssignmentCard> {
             ),
             ElevatedButton(
               onPressed: () async {
-                await state.setTeacherClasses(widget.teacher.id, selected.toList());
-                if (!ctx.mounted) return;
-                Navigator.of(ctx).pop();
+                try {
+                  await state.setTeacherClasses(widget.teacher.id, selected.toList());
+                  if (!ctx.mounted) return;
+                  Navigator.of(ctx).pop();
+                } catch (e) {
+                  if (!ctx.mounted) return;
+                  Navigator.of(ctx).pop();
+                  ScaffoldMessenger.of(ctx).showSnackBar(
+                    SnackBar(content: Text('Failed to save: $e'), backgroundColor: AppTheme.error),
+                  );
+                }
               },
               child: const Text('Save'),
             ),
@@ -435,9 +466,17 @@ class _TeacherAssignmentCardState extends State<_TeacherAssignmentCard> {
             ),
             ElevatedButton(
               onPressed: () async {
-                await state.setTeacherSubjects(widget.teacher.id, selected.toList());
-                if (!ctx.mounted) return;
-                Navigator.of(ctx).pop();
+                try {
+                  await state.setTeacherSubjects(widget.teacher.id, selected.toList());
+                  if (!ctx.mounted) return;
+                  Navigator.of(ctx).pop();
+                } catch (e) {
+                  if (!ctx.mounted) return;
+                  Navigator.of(ctx).pop();
+                  ScaffoldMessenger.of(ctx).showSnackBar(
+                    SnackBar(content: Text('Failed to save: $e'), backgroundColor: AppTheme.error),
+                  );
+                }
               },
               child: const Text('Save'),
             ),
