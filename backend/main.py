@@ -28,8 +28,8 @@ app = FastAPI(
 # ── CORS ─────────────────────────────────────────────────────────────────────
 app.add_middleware(
     CORSMiddleware,
-    allow_origin_regex=r"https?://(localhost|\d+\.\d+\.\d+\.\d+)(:\d+)?|https://.*\.cloudworkstations\.dev|https://.*\.web\.app|https://.*\.firebaseapp\.com",
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
