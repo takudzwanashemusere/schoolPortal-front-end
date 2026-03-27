@@ -48,12 +48,13 @@ class _StaffLoginScreenState extends State<StaffLoginScreen> {
     }
 
     final state = AppStateProvider.read(context);
-    final success = await state.loginAsRoleAsync(userId, password, _selectedRole.name);
-    if (!mounted) return;
-    if (success) {
-      Navigator.of(context).popUntil((route) => route.isFirst);
-    } else {
-      setState(() => _errorMessage = 'Incorrect User ID or password.');
+    try {
+      final success = await state.loginAsRoleAsync(userId, password, _selectedRole.name);
+      if (!mounted) return;
+      if (success) Navigator.of(context).popUntil((route) => route.isFirst);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _errorMessage = e.toString());
     }
   }
 

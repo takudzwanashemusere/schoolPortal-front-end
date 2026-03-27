@@ -104,7 +104,7 @@ class AppState extends ChangeNotifier {
   }
 
   /// Async login — validates against the backend API.
-  /// Falls back to mock data if the backend is unreachable.
+  /// Throws a [String] error message on failure.
   Future<bool> loginAsRoleAsync(String userId, String password, String role) async {
     _isLoading = true;
     notifyListeners();
@@ -114,7 +114,7 @@ class AppState extends ChangeNotifier {
       if (serverRole != role) {
         _isLoading = false;
         notifyListeners();
-        return false;
+        throw 'Incorrect User ID or password.';
       }
       ApiService.instance.setToken(data['access_token'] as String);
 
@@ -134,10 +134,14 @@ class AppState extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
       return true;
+    } on ApiException {
+      _isLoading = false;
+      notifyListeners();
+      throw 'Incorrect User ID or password.';
     } catch (_) {
       _isLoading = false;
       notifyListeners();
-      return false;
+      throw 'Cannot connect to server. Check your internet connection.';
     }
   }
 
