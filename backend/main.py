@@ -23,6 +23,7 @@ app = FastAPI(
     description="High School Results Management System — REST API (MongoDB)",
     version="2.0.0",
     lifespan=lifespan,
+    redirect_slashes=False,
 )
 
 # ── CORS ─────────────────────────────────────────────────────────────────────
