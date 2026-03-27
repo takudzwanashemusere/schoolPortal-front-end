@@ -251,7 +251,7 @@ class _AdminClassesPageState extends State<AdminClassesPage> {
                     Text('Classes', style: AppTheme.heading1),
                     SizedBox(height: 4),
                     Text(
-                      'Overview of all classes, assigned teachers, and students.',
+                      'Overview of all classes, assigned teachers and students.',
                       style: AppTheme.label,
                     ),
                   ],
