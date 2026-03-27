@@ -134,14 +134,14 @@ class AppState extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
       return true;
-    } on ApiException {
+    } on ApiException catch (e) {
       _isLoading = false;
       notifyListeners();
-      throw 'Incorrect User ID or password.';
-    } catch (_) {
+      throw 'Incorrect User ID or password. ($e)';
+    } catch (e) {
       _isLoading = false;
       notifyListeners();
-      throw 'Cannot connect to server. Check your internet connection.';
+      throw 'Error: $e';
     }
   }
 
