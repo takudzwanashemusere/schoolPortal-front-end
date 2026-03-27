@@ -137,7 +137,7 @@ class AppState extends ChangeNotifier {
     } on ApiException catch (e) {
       _isLoading = false;
       notifyListeners();
-      throw 'Incorrect User ID or password. ($e)';
+      throw 'Incorrect User ID or password.';
     } catch (e) {
       _isLoading = false;
       notifyListeners();

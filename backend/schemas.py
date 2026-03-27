@@ -143,13 +143,13 @@ class MarkResponse(BaseModel):
 
 
 def mark_to_response(m) -> MarkResponse:
-    final = calc_final_mark(m.test_mark, m.exam_mark)
+    final = calc_final_mark(m["test_mark"], m["exam_mark"])
     return MarkResponse(
-        student_id=m.student_id,
-        subject_id=m.subject_id,
-        class_id=m.class_id,
-        test_mark=m.test_mark,
-        exam_mark=m.exam_mark,
+        student_id=m["student_id"],
+        subject_id=m["subject_id"],
+        class_id=m["class_id"],
+        test_mark=m["test_mark"],
+        exam_mark=m["exam_mark"],
         final_mark=final,
         grade=calc_grade(final),
         is_passing=final >= 50,
