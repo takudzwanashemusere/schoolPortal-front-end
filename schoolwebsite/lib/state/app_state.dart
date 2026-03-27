@@ -48,14 +48,9 @@ class AppState extends ChangeNotifier {
     _users = List<AppUser>.from(mockUsers);
     _teachers = [];
     _subjects = [];
-    _classes = List<ClassGroup>.from(mockClasses.map((c) => ClassGroup(
-          id: c.id,
-          name: c.name,
-          studentIds: List<String>.from(c.studentIds),
-          teacherIds: List<String>.from(c.teacherIds),
-        )));
-    _students = List<Student>.from(mockStudents);
-    _marks = List<Mark>.from(initialMarks);
+    _classes = [];
+    _students = [];
+    _marks = [];
     _submittedTeacherIds = {};
   }
 
@@ -77,22 +72,15 @@ class AppState extends ChangeNotifier {
       _students = results[3] as List<Student>;
       _marks = results[4] as List<Mark>;
       _submittedTeacherIds = results[5] as Set<String>;
-    } catch (_) {
-      // Fall back to mock data if API unreachable
-      _teachers = mockTeachers.map((t) => Teacher(
-            id: t.id, name: t.name,
-            subjectIds: List<String>.from(t.subjectIds),
-            classIds: List<String>.from(t.classIds),
-          )).toList();
-      _subjects = List<Subject>.from(mockSubjects);
-      _classes = mockClasses.map((c) => ClassGroup(
-            id: c.id, name: c.name,
-            studentIds: List<String>.from(c.studentIds),
-            teacherIds: List<String>.from(c.teacherIds),
-          )).toList();
-      _students = List<Student>.from(mockStudents);
-      _marks = List<Mark>.from(initialMarks);
-      _submittedTeacherIds = Set<String>.from(initialSubmittedTeacherIds);
+    } catch (e) {
+      // API unreachable — show empty data so no fake hardcoded data appears
+      _teachers = [];
+      _subjects = [];
+      _classes = [];
+      _students = [];
+      _marks = [];
+      _submittedTeacherIds = {};
+      rethrow;
     }
   }
 
@@ -147,26 +135,8 @@ class AppState extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (_) {
-      // Fall back to mock login
       _isLoading = false;
-      final result = _mockLoginAsRole(userId, password, role);
-      if (result) await _loadFromApi();
       notifyListeners();
-      return result;
-    }
-  }
-
-  bool _mockLoginAsRole(String userId, String password, String role) {
-    try {
-      final user = _users.firstWhere((u) => u.id == userId);
-      if (user.role.name != role) return false;
-      if (user.password != password) return false;
-      _currentUser = user;
-      _adminPageIndex = 0;
-      _teacherPageIndex = 0;
-      _studentPageIndex = 0;
-      return true;
-    } catch (_) {
       return false;
     }
   }
