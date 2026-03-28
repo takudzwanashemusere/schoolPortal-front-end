@@ -94,10 +94,3 @@ integrate with payment methods like eco cash
 
  the add teacher , class button are not working 
  
- for the sack of gitubh comiits hhahah
-
- uncessary committ 
-
- comme to sleep 
-
- heyyy
