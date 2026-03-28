@@ -152,7 +152,7 @@ class ApiService {
     required List<String> subjectNames,
     required List<String> classIds,
   }) async {
-    final data = await _post('/teachers', {
+    final data = await _post('/teachers/', {
       'name': name,
       'password': password,
       'subject_names': subjectNames,
@@ -198,7 +198,7 @@ class ApiService {
   // ── Classes ──────────────────────────────────────────────────────────────────
 
   Future<ClassGroup> createClass(String name) async {
-    final data = await _post('/classes', {'name': name}) as Map<String, dynamic>;
+    final data = await _post('/classes/', {'name': name}) as Map<String, dynamic>;
     return ClassGroup(
       id: data['id'],
       name: data['name'],
@@ -214,7 +214,7 @@ class ApiService {
   // ── Students ─────────────────────────────────────────────────────────────────
 
   Future<Student> createStudent(String name, String classId) async {
-    final data = await _post('/students', {'name': name, 'class_id': classId})
+    final data = await _post('/students/', {'name': name, 'class_id': classId})
         as Map<String, dynamic>;
     return Student(id: data['id'], name: data['name'], classId: data['class_id']);
   }
@@ -230,7 +230,7 @@ class ApiService {
   // ── Marks ────────────────────────────────────────────────────────────────────
 
   Future<void> upsertMark(Mark mark) async {
-    await _post('/marks', {
+    await _post('/marks/', {
       'student_id': mark.studentId,
       'subject_id': mark.subjectId,
       'class_id': mark.classId,
