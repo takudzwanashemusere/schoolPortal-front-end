@@ -94,4 +94,5 @@ integrate with payment methods like eco cash
 
  the add teacher , class button are not working 
  
-teacher should be able to search a student in a class  and also for the admin ......students should be numbered also 
+teacher should be able to search a student in a class  and also for the admin ......students should be numbered also   
+

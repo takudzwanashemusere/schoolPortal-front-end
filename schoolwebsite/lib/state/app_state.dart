@@ -134,7 +134,7 @@ class AppState extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
       return true;
-    } on ApiException catch (e) {
+    } on ApiException {
       _isLoading = false;
       notifyListeners();
       throw 'Incorrect User ID or password.';
