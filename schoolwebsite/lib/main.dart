@@ -3,7 +3,7 @@ import 'package:schoolwebsite/app_theme.dart';
 import 'package:schoolwebsite/models/models.dart';
 import 'package:schoolwebsite/state/app_state.dart';
 import 'package:schoolwebsite/state/app_state_provider.dart';
-import 'package:schoolwebsite/screens/login_screen.dart';
+import 'package:schoolwebsite/screens/landing_screen.dart';
 import 'package:schoolwebsite/screens/admin/admin_shell.dart';
 import 'package:schoolwebsite/screens/teacher/teacher_shell.dart';
 import 'package:schoolwebsite/screens/student/student_shell.dart';
@@ -50,7 +50,7 @@ class _AppRoot extends StatelessWidget {
     final state = AppStateProvider.of(context);
 
     if (state.currentUser == null) {
-      return const LoginScreen();
+      return const LandingScreen();
     }
 
     switch (state.currentUser!.role) {

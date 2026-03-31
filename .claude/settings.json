@@ -18,7 +18,8 @@
       "Bash(flutter pub:*)",
       "Bash(flutter analyze:*)",
       "Bash(flutter build:*)",
-      "Bash(firebase deploy:*)"
+      "Bash(firebase deploy:*)",
+      "Bash(find c:UserspcOneDriveDesktopschoolPortalschoolwebsite -type f \\\\\\(-iname *.png -o -iname *.jpg -o -iname *.jpeg -o -iname *.gif -o -iname *.webp \\\\\\))"
     ]
   }
 }
