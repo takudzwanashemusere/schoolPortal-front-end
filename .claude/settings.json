@@ -19,7 +19,16 @@
       "Bash(flutter analyze:*)",
       "Bash(flutter build:*)",
       "Bash(firebase deploy:*)",
-      "Bash(find c:UserspcOneDriveDesktopschoolPortalschoolwebsite -type f \\\\\\(-iname *.png -o -iname *.jpg -o -iname *.jpeg -o -iname *.gif -o -iname *.webp \\\\\\))"
+      "Bash(find c:UserspcOneDriveDesktopschoolPortalschoolwebsite -type f \\\\\\(-iname *.png -o -iname *.jpg -o -iname *.jpeg -o -iname *.gif -o -iname *.webp \\\\\\))",
+      "Bash(flutter doctor *)",
+      "Bash(flutter run *)",
+      "PowerShell(python --version)",
+      "PowerShell(pip --version)",
+      "PowerShell(python -c \"import motor; print\\('motor ok'\\)\" 2>&1)",
+      "PowerShell(python -c \"import fastapi; print\\('fastapi ok'\\)\" 2>&1)",
+      "PowerShell(python -c \"import uvicorn; print\\('uvicorn ok'\\)\" 2>&1)",
+      "PowerShell(Get-Service -Name MongoDB -ErrorAction SilentlyContinue)",
+      "PowerShell(mongod --version 2>&1)"
     ]
   }
 }

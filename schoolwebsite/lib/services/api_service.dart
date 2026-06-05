@@ -5,7 +5,7 @@ import 'package:schoolwebsite/models/models.dart';
 /// Change this to your backend URL.
 /// Local dev:  http://localhost:8000
 /// Cloud workstation: https://8000-YOUR_WORKSTATION_ID.cloudworkstations.dev
-const String kApiBaseUrl = 'https://schoolportal-front-end-production.up.railway.app';
+const String kApiBaseUrl = 'http://localhost:8000';
 
 class ApiException implements Exception {
   final String message;
