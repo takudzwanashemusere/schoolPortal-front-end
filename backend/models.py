@@ -8,3 +8,5 @@
 # marks        : {student_id, subject_id, class_id, test_mark, exam_mark}
 # submissions  : {_id (=teacher_id), submitted_at}
 # headmaster_report : {_id:"singleton", comment, signature}
+# applications : {_id (uuid), full_name, email, phone, form_applying_for, previous_school,
+#                  reason_for_leaving, results_file_name, submitted_at, is_reviewed}

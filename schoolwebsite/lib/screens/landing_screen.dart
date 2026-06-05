@@ -1079,10 +1079,14 @@ class _ApplicationFormState extends State<_ApplicationForm> {
     if (mounted) setState(() { _resultsFileName = name; _pickingFile = false; });
   }
 
-  void _submit() {
-    if (_formKey.currentState!.validate()) {
+  bool _submitting = false;
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _submitting = true);
+    try {
       final app = StudentApplication(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        id: '',
         fullName: _nameController.text.trim(),
         email: _emailController.text.trim(),
         phone: _phoneController.text.trim(),
@@ -1092,8 +1096,10 @@ class _ApplicationFormState extends State<_ApplicationForm> {
         resultsFileName: _resultsFileName,
         submittedAt: DateTime.now(),
       );
-      AppStateProvider.read(context).submitApplication(app);
-      setState(() => _submitted = true);
+      await AppStateProvider.read(context).submitApplication(app);
+      if (mounted) setState(() => _submitted = true);
+    } catch (_) {
+      if (mounted) setState(() => _submitting = false);
     }
   }
 
@@ -1266,8 +1272,17 @@ class _ApplicationFormState extends State<_ApplicationForm> {
                         textStyle: const TextStyle(
                             fontSize: 14, fontWeight: FontWeight.w800),
                       ),
-                      onPressed: _submit,
-                      child: const Text('Submit Application'),
+                      onPressed: _submitting ? null : _submit,
+                      child: _submitting
+                          ? const SizedBox(
+                              height: 18,
+                              width: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: _navy,
+                              ),
+                            )
+                          : const Text('Submit Application'),
                     ),
                   ),
                 ],

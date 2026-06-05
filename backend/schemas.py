@@ -187,6 +187,31 @@ class HeadmasterReportUpdateRequest(BaseModel):
     signature: str
 
 
+# ── Student Application ───────────────────────────────────────────────────────
+
+class ApplicationSubmitRequest(BaseModel):
+    full_name: str
+    email: str
+    phone: str
+    form_applying_for: str
+    previous_school: str
+    reason_for_leaving: str
+    results_file_name: Optional[str] = None
+
+
+class ApplicationResponse(BaseModel):
+    id: str
+    full_name: str
+    email: str
+    phone: str
+    form_applying_for: str
+    previous_school: str
+    reason_for_leaving: str
+    results_file_name: Optional[str] = None
+    submitted_at: datetime
+    is_reviewed: bool
+
+
 # ── Class report (for print/preview) ─────────────────────────────────────────
 
 class StudentMarkEntry(BaseModel):

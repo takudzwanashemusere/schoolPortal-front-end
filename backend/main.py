@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from database import connect_db, close_db, get_db
 from seed import seed_database
 from routers import auth_router, teachers, students, classes, subjects, marks, admin, reports
+from routers import applications
 
 
 @asynccontextmanager
@@ -43,7 +44,8 @@ app.include_router(classes.router,     prefix="/classes",  tags=["Classes"])
 app.include_router(subjects.router,    prefix="/subjects", tags=["Subjects"])
 app.include_router(marks.router,       prefix="/marks",    tags=["Marks"])
 app.include_router(admin.router,       prefix="/admin",    tags=["Admin"])
-app.include_router(reports.router,     prefix="/reports",  tags=["Reports"])
+app.include_router(reports.router,       prefix="/reports",       tags=["Reports"])
+app.include_router(applications.router, prefix="/applications",  tags=["Applications"])
 
 
 @app.get("/", tags=["Health"])

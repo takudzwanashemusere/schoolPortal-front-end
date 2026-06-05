@@ -244,4 +244,47 @@ class ApiService {
   Future<void> markTeacherSubmitted(String teacherId) async {
     await _post('/admin/submission/$teacherId', {});
   }
+
+  // ── Applications ─────────────────────────────────────────────────────────────
+
+  Future<StudentApplication> submitApplication(StudentApplication app) async {
+    final data = await _post('/applications/', {
+      'full_name': app.fullName,
+      'email': app.email,
+      'phone': app.phone,
+      'form_applying_for': app.formApplyingFor,
+      'previous_school': app.previousSchool,
+      'reason_for_leaving': app.reasonForLeaving,
+      'results_file_name': app.resultsFileName,
+    }) as Map<String, dynamic>;
+    return _appFromJson(data);
+  }
+
+  Future<List<StudentApplication>> fetchApplications() async {
+    final data = await _get('/applications/') as List;
+    return data.map((d) => _appFromJson(d as Map<String, dynamic>)).toList();
+  }
+
+  Future<void> reviewApplication(String id) async {
+    await _put('/applications/$id/review', {});
+  }
+
+  Future<void> deleteApplicationRemote(String id) async {
+    await _delete('/applications/$id');
+  }
+
+  StudentApplication _appFromJson(Map<String, dynamic> d) {
+    return StudentApplication(
+      id: d['id'] as String,
+      fullName: d['full_name'] as String,
+      email: d['email'] as String,
+      phone: d['phone'] as String,
+      formApplyingFor: d['form_applying_for'] as String,
+      previousSchool: d['previous_school'] as String,
+      reasonForLeaving: d['reason_for_leaving'] as String,
+      resultsFileName: d['results_file_name'] as String?,
+      submittedAt: DateTime.parse(d['submitted_at'] as String),
+      isReviewed: d['is_reviewed'] as bool? ?? false,
+    );
+  }
 }

@@ -68,6 +68,7 @@ class AppState extends ChangeNotifier {
         api.fetchStudents(),
         api.fetchMarks(),
         api.fetchSubmittedTeacherIds(),
+        api.fetchApplications(),
       ]);
       _teachers = results[0] as List<Teacher>;
       _subjects = results[1] as List<Subject>;
@@ -75,6 +76,9 @@ class AppState extends ChangeNotifier {
       _students = results[3] as List<Student>;
       _marks = results[4] as List<Mark>;
       _submittedTeacherIds = results[5] as Set<String>;
+      _applications
+        ..clear()
+        ..addAll(results[6] as List<StudentApplication>);
     } catch (e) {
       // API unreachable — show empty data so no fake hardcoded data appears
       _teachers = [];
@@ -83,6 +87,7 @@ class AppState extends ChangeNotifier {
       _students = [];
       _marks = [];
       _submittedTeacherIds = {};
+      _applications.clear();
       rethrow;
     }
   }
@@ -433,12 +438,14 @@ Future<void> addStudent(String name, String classId) async {
 
   // ─── Applications ───────────────────────────────────────────────────────────
 
-  void submitApplication(StudentApplication app) {
-    _applications.add(app);
+  Future<void> submitApplication(StudentApplication app) async {
+    final saved = await ApiService.instance.submitApplication(app);
+    _applications.insert(0, saved);
     notifyListeners();
   }
 
-  void markApplicationReviewed(String id) {
+  Future<void> markApplicationReviewed(String id) async {
+    await ApiService.instance.reviewApplication(id);
     final i = _applications.indexWhere((a) => a.id == id);
     if (i >= 0) {
       _applications[i] = _applications[i].copyWith(isReviewed: true);
@@ -446,7 +453,8 @@ Future<void> addStudent(String name, String classId) async {
     }
   }
 
-  void deleteApplication(String id) {
+  Future<void> deleteApplication(String id) async {
+    await ApiService.instance.deleteApplicationRemote(id);
     _applications.removeWhere((a) => a.id == id);
     notifyListeners();
   }
