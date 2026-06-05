@@ -16,6 +16,11 @@ class AdminDashboardPage extends StatelessWidget {
         .where((t) => !state.submittedTeacherIds.contains(t.id))
         .toList();
     final totalStudents = state.students.length;
+    final pendingApps = state.pendingApplicationsCount;
+    final recentApps = state.applications
+        .where((a) => !a.isReviewed)
+        .take(5)
+        .toList();
 
     final isMobile = MediaQuery.of(context).size.width < 600;
 
@@ -49,6 +54,13 @@ class AdminDashboardPage extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(child: StatCard(label: 'Marks Submitted', value: '$submittedCount / ${teachers.length}', subtitle: 'teachers submitted', accentColor: submittedCount == teachers.length ? AppTheme.success : AppTheme.warning)),
             ]),
+            const SizedBox(height: 12),
+            StatCard(
+              label: 'Applications',
+              value: '$pendingApps',
+              subtitle: 'pending review',
+              accentColor: pendingApps > 0 ? const Color(0xFFF59E0B) : AppTheme.success,
+            ),
           ] else
             Row(
               children: [
@@ -59,6 +71,8 @@ class AdminDashboardPage extends StatelessWidget {
                 Expanded(child: StatCard(label: 'Classes', value: '${state.classes.length}', subtitle: '${state.classes.length} active', accentColor: const Color(0xFF7C3AED))),
                 const SizedBox(width: 16),
                 Expanded(child: StatCard(label: 'Marks Submitted', value: '$submittedCount / ${teachers.length}', subtitle: 'teachers have submitted', accentColor: submittedCount == teachers.length ? AppTheme.success : AppTheme.warning)),
+                const SizedBox(width: 16),
+                Expanded(child: StatCard(label: 'Applications', value: '$pendingApps', subtitle: 'pending review', accentColor: pendingApps > 0 ? const Color(0xFFF59E0B) : AppTheme.success)),
               ],
             ),
           const SizedBox(height: 32),
@@ -168,6 +182,53 @@ class AdminDashboardPage extends StatelessWidget {
               ];
             }).toList(),
           ),
+          const SizedBox(height: 32),
+
+          // ── Pending applications preview ──────────────────────────────────
+          SectionHeader(
+            title: 'Pending Applications',
+            subtitle: 'Recent admissions applications awaiting review. Go to Applications for full details.',
+          ),
+          const SizedBox(height: 14),
+          if (recentApps.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppTheme.surface,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppTheme.border),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.check_circle_outline_rounded,
+                      color: AppTheme.success, size: 20),
+                  SizedBox(width: 10),
+                  Text('No pending applications.',
+                      style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+                ],
+              ),
+            )
+          else
+            AppTable(
+              headers: const ['APPLICANT', 'FORM', 'CONTACT', 'PREVIOUS SCHOOL', 'SUBMITTED'],
+              rows: recentApps.map((app) {
+                final months = ['Jan','Feb','Mar','Apr','May','Jun',
+                    'Jul','Aug','Sep','Oct','Nov','Dec'];
+                final d = app.submittedAt;
+                final date = '${d.day} ${months[d.month - 1]}';
+                return [
+                  Text(app.fullName, style: AppTheme.body),
+                  Text(app.formApplyingFor,
+                      style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
+                  Text(app.phone,
+                      style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
+                  Text(app.previousSchool,
+                      style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
+                  Text(date,
+                      style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
+                ];
+              }).toList(),
+            ),
           const SizedBox(height: 32),
         ],
       ),

@@ -16,6 +16,7 @@ class AppState extends ChangeNotifier {
   late List<ClassGroup> _classes;
   late List<Mark> _marks;
   late Set<String> _submittedTeacherIds;
+  final List<StudentApplication> _applications = [];
   String _headmasterComment =
       'This student has demonstrated consistent effort and dedication throughout the academic year. '
       'We encourage continued focus on areas requiring improvement and commend their overall performance.';
@@ -30,6 +31,8 @@ class AppState extends ChangeNotifier {
   List<Mark> get marks => List.unmodifiable(_marks);
   Set<String> get submittedTeacherIds => Set.unmodifiable(_submittedTeacherIds);
   List<ClassGroup> get classes => List.unmodifiable(_classes);
+  List<StudentApplication> get applications => List.unmodifiable(_applications);
+  int get pendingApplicationsCount => _applications.where((a) => !a.isReviewed).length;
 
   // ─── Loading state ──────────────────────────────────────────────────────────
   bool _isLoading = false;
@@ -425,6 +428,26 @@ Future<void> addStudent(String name, String classId) async {
 
   void updateHeadmasterSignature(String signature) {
     _headmasterSignature = signature;
+    notifyListeners();
+  }
+
+  // ─── Applications ───────────────────────────────────────────────────────────
+
+  void submitApplication(StudentApplication app) {
+    _applications.add(app);
+    notifyListeners();
+  }
+
+  void markApplicationReviewed(String id) {
+    final i = _applications.indexWhere((a) => a.id == id);
+    if (i >= 0) {
+      _applications[i] = _applications[i].copyWith(isReviewed: true);
+      notifyListeners();
+    }
+  }
+
+  void deleteApplication(String id) {
+    _applications.removeWhere((a) => a.id == id);
     notifyListeners();
   }
 

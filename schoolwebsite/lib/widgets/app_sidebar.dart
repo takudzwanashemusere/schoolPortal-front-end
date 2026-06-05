@@ -4,7 +4,8 @@ import 'package:schoolwebsite/app_theme.dart';
 class SidebarNavItem {
   final String label;
   final IconData icon;
-  const SidebarNavItem({required this.label, required this.icon});
+  final int badgeCount;
+  const SidebarNavItem({required this.label, required this.icon, this.badgeCount = 0});
 }
 
 class AppSidebar extends StatelessWidget {
@@ -178,16 +179,34 @@ class _SidebarItemState extends State<_SidebarItem> {
             children: [
               Icon(widget.item.icon, color: color, size: 18),
               const SizedBox(width: 10),
-              Text(
-                widget.item.label,
-                style: TextStyle(
-                  color: color,
-                  fontSize: 13,
-                  fontWeight: widget.isSelected
-                      ? FontWeight.w600
-                      : FontWeight.w400,
+              Expanded(
+                child: Text(
+                  widget.item.label,
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 13,
+                    fontWeight: widget.isSelected
+                        ? FontWeight.w600
+                        : FontWeight.w400,
+                  ),
                 ),
               ),
+              if (widget.item.badgeCount > 0)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppTheme.sidebarAccent,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    '${widget.item.badgeCount}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
             ],
           ),
         ),

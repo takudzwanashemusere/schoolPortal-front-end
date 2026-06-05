@@ -1,5 +1,46 @@
 enum UserRole { admin, teacher, student }
 
+class StudentApplication {
+  final String id;
+  final String fullName;
+  final String email;
+  final String phone;
+  final String formApplyingFor;
+  final String previousSchool;
+  final String reasonForLeaving;
+  final String? resultsFileName;
+  final DateTime submittedAt;
+  final bool isReviewed;
+
+  const StudentApplication({
+    required this.id,
+    required this.fullName,
+    required this.email,
+    required this.phone,
+    required this.formApplyingFor,
+    required this.previousSchool,
+    required this.reasonForLeaving,
+    this.resultsFileName,
+    required this.submittedAt,
+    this.isReviewed = false,
+  });
+
+  StudentApplication copyWith({bool? isReviewed}) {
+    return StudentApplication(
+      id: id,
+      fullName: fullName,
+      email: email,
+      phone: phone,
+      formApplyingFor: formApplyingFor,
+      previousSchool: previousSchool,
+      reasonForLeaving: reasonForLeaving,
+      resultsFileName: resultsFileName,
+      submittedAt: submittedAt,
+      isReviewed: isReviewed ?? this.isReviewed,
+    );
+  }
+}
+
 class AppUser {
   final String id;
   final String name;

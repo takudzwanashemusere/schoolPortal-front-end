@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:schoolwebsite/models/models.dart';
 import 'package:schoolwebsite/screens/login_screen.dart';
+import 'package:schoolwebsite/services/file_picker_service.dart';
+import 'package:schoolwebsite/state/app_state_provider.dart';
 
 // ── Colour palette (matches school brand) ─────────────────────────────────────
 const _navy = Color(0xFF0D2240);
 const _navyLight = Color(0xFF1E3A5F);
 const _accent = Color(0xFF2563EB);
-const _accentLight = Color(0xFF3B82F6);
 const _gold = Color(0xFFF59E0B);
 const _white = Colors.white;
 const _offWhite = Color(0xFFF8FAFC);
@@ -346,7 +348,7 @@ class _HeroSection extends StatelessWidget {
             child: Image.asset(
               'lib/images/Facebook-St-Georges-College-1-min.jpg',
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(color: _navyLight),
+              errorBuilder: (_, _, _) => Container(color: _navyLight),
             ),
           ),
           // Dark gradient overlay
@@ -620,7 +622,7 @@ class _AboutImage extends StatelessWidget {
         child: Image.asset(
           'lib/images/WhatsApp Image 2026-03-31 at 09.40.33.jpeg',
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => Container(
+          errorBuilder: (_, _, _) => Container(
             color: _navyLight.withValues(alpha: 0.15),
             child: const Icon(Icons.school_rounded, size: 80, color: _navyLight),
           ),
@@ -797,7 +799,7 @@ class _LifeCardState extends State<_LifeCard> {
           ],
         ),
         transform: _hovered
-            ? (Matrix4.identity()..translate(0.0, -4.0))
+            ? Matrix4.translationValues(0.0, -4.0, 0.0)
             : Matrix4.identity(),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(16),
@@ -809,7 +811,7 @@ class _LifeCardState extends State<_LifeCard> {
                 child: Image.asset(
                   widget.imageAsset,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
+                  errorBuilder: (_, _, _) => Container(
                     color: _navyLight.withValues(alpha: 0.12),
                     child: Icon(widget.icon, size: 60, color: _navyLight),
                   ),
@@ -1054,19 +1056,43 @@ class _ApplicationFormState extends State<_ApplicationForm> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _prevSchoolController = TextEditingController();
+  final _reasonController = TextEditingController();
   String _selectedForm = 'Form 1';
   bool _submitted = false;
+  String? _resultsFileName;
+  bool _pickingFile = false;
 
   @override
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
+    _prevSchoolController.dispose();
+    _reasonController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickFile() async {
+    setState(() => _pickingFile = true);
+    final name = await pickResultsFile();
+    if (mounted) setState(() { _resultsFileName = name; _pickingFile = false; });
   }
 
   void _submit() {
     if (_formKey.currentState!.validate()) {
+      final app = StudentApplication(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        fullName: _nameController.text.trim(),
+        email: _emailController.text.trim(),
+        phone: _phoneController.text.trim(),
+        formApplyingFor: _selectedForm,
+        previousSchool: _prevSchoolController.text.trim(),
+        reasonForLeaving: _reasonController.text.trim(),
+        resultsFileName: _resultsFileName,
+        submittedAt: DateTime.now(),
+      );
+      AppStateProvider.read(context).submitApplication(app);
       setState(() => _submitted = true);
     }
   }
@@ -1087,22 +1113,26 @@ class _ApplicationFormState extends State<_ApplicationForm> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Enquiry Form',
-                    style: TextStyle(color: _white, fontSize: 18,
-                        fontWeight: FontWeight.w800)),
+                  const Text('Application Form',
+                      style: TextStyle(
+                          color: _white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800)),
                   const SizedBox(height: 6),
-                  Text('Submit your details and we\'ll be in touch.',
-                    style: TextStyle(
-                      color: _white.withValues(alpha: 0.6), fontSize: 13)),
+                  Text('Complete all fields and attach your previous term results.',
+                      style: TextStyle(
+                          color: _white.withValues(alpha: 0.6), fontSize: 13)),
                   const SizedBox(height: 24),
+
+                  // ── Personal details ──────────────────────────────────────
                   _FormField(
                     controller: _nameController,
                     label: "Student's Full Name",
-                    hint: 'e.g. Chanda Mulenga',
+                    hint: 'e.g. Takudzwa Musere',
                     validator: (v) =>
                         (v == null || v.trim().isEmpty) ? 'Name is required' : null,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 14),
                   _FormField(
                     controller: _emailController,
                     label: 'Parent / Guardian Email',
@@ -1110,50 +1140,119 @@ class _ApplicationFormState extends State<_ApplicationForm> {
                     validator: (v) =>
                         (v == null || !v.contains('@')) ? 'Enter a valid email' : null,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 14),
                   _FormField(
                     controller: _phoneController,
-                    label: 'Contact Phone',
-                    hint: '+263 ...',
+                    label: 'Contact Phone Number',
+                    hint: '+263 77 123 4567',
                     validator: (v) =>
                         (v == null || v.trim().isEmpty) ? 'Phone is required' : null,
                   ),
-                  const SizedBox(height: 16),
-                  // Form level selector
+                  const SizedBox(height: 14),
+
+                  // ── Form level ────────────────────────────────────────────
+                  _DropdownField(
+                    label: 'Applying For',
+                    value: _selectedForm,
+                    items: const ['Form 1', 'Form 2', 'Form 3', 'Form 4'],
+                    onChanged: (v) => setState(() => _selectedForm = v!),
+                  ),
+                  const SizedBox(height: 14),
+
+                  // ── Previous school ───────────────────────────────────────
+                  _FormField(
+                    controller: _prevSchoolController,
+                    label: 'Previous School Attended',
+                    hint: 'e.g. St. John\'s Primary School',
+                    validator: (v) =>
+                        (v == null || v.trim().isEmpty) ? 'Previous school is required' : null,
+                  ),
+                  const SizedBox(height: 14),
+
+                  // ── Reason for leaving ────────────────────────────────────
+                  _FormField(
+                    controller: _reasonController,
+                    label: 'Reason for Leaving Previous School',
+                    hint: 'Briefly describe why you are leaving...',
+                    maxLines: 3,
+                    validator: (v) =>
+                        (v == null || v.trim().isEmpty) ? 'Please provide a reason' : null,
+                  ),
+                  const SizedBox(height: 14),
+
+                  // ── Results file upload ───────────────────────────────────
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Applying For',
-                        style: TextStyle(color: _white, fontSize: 12,
-                            fontWeight: FontWeight.w600)),
+                      const Text('Previous Term Results',
+                          style: TextStyle(
+                              color: _white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 4),
+                      Text('Attach a photo or PDF of your last report card.',
+                          style: TextStyle(
+                              color: _white.withValues(alpha: 0.45),
+                              fontSize: 11)),
                       const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14),
-                        decoration: BoxDecoration(
-                          color: _white.withValues(alpha: 0.07),
-                          border: Border.all(color: _white.withValues(alpha: 0.2)),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            value: _selectedForm,
-                            isExpanded: true,
-                            dropdownColor: _navyLight,
-                            style: const TextStyle(color: _white, fontSize: 14),
-                            iconEnabledColor: _white,
-                            items: ['Form 1', 'Form 2', 'Form 3', 'Form 4']
-                                .map((f) => DropdownMenuItem(
-                                      value: f,
-                                      child: Text(f),
-                                    ))
-                                .toList(),
-                            onChanged: (v) =>
-                                setState(() => _selectedForm = v!),
+                      GestureDetector(
+                        onTap: _pickingFile ? null : _pickFile,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: _white.withValues(alpha: 0.07),
+                            border: Border.all(
+                                color: _resultsFileName != null
+                                    ? _gold.withValues(alpha: 0.6)
+                                    : _white.withValues(alpha: 0.2),
+                                width: _resultsFileName != null ? 1.5 : 1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                _resultsFileName != null
+                                    ? Icons.check_circle_rounded
+                                    : Icons.attach_file_rounded,
+                                color: _resultsFileName != null
+                                    ? _gold
+                                    : _white.withValues(alpha: 0.5),
+                                size: 18,
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: _pickingFile
+                                    ? Text('Opening file picker…',
+                                        style: TextStyle(
+                                            color: _white.withValues(alpha: 0.5),
+                                            fontSize: 13))
+                                    : Text(
+                                        _resultsFileName ??
+                                            'Tap to attach results (image or PDF)',
+                                        style: TextStyle(
+                                            color: _resultsFileName != null
+                                                ? _white
+                                                : _white.withValues(alpha: 0.4),
+                                            fontSize: 13),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                              ),
+                              if (_resultsFileName != null)
+                                GestureDetector(
+                                  onTap: () =>
+                                      setState(() => _resultsFileName = null),
+                                  child: Icon(Icons.close_rounded,
+                                      color: _white.withValues(alpha: 0.4),
+                                      size: 16),
+                                ),
+                            ],
                           ),
                         ),
                       ),
                     ],
                   ),
+
                   const SizedBox(height: 24),
                   SizedBox(
                     width: double.infinity,
@@ -1168,12 +1267,60 @@ class _ApplicationFormState extends State<_ApplicationForm> {
                             fontSize: 14, fontWeight: FontWeight.w800),
                       ),
                       onPressed: _submit,
-                      child: const Text('Submit Enquiry'),
+                      child: const Text('Submit Application'),
                     ),
                   ),
                 ],
               ),
             ),
+    );
+  }
+}
+
+class _DropdownField extends StatelessWidget {
+  final String label;
+  final String value;
+  final List<String> items;
+  final ValueChanged<String?> onChanged;
+
+  const _DropdownField({
+    required this.label,
+    required this.value,
+    required this.items,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+            style: const TextStyle(
+                color: _white, fontSize: 12, fontWeight: FontWeight.w600)),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          decoration: BoxDecoration(
+            color: _white.withValues(alpha: 0.07),
+            border: Border.all(color: _white.withValues(alpha: 0.2)),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: value,
+              isExpanded: true,
+              dropdownColor: _navyLight,
+              style: const TextStyle(color: _white, fontSize: 14),
+              iconEnabledColor: _white,
+              items: items
+                  .map((f) => DropdownMenuItem(value: f, child: Text(f)))
+                  .toList(),
+              onChanged: onChanged,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -1211,12 +1358,14 @@ class _FormField extends StatelessWidget {
   final String label;
   final String hint;
   final String? Function(String?)? validator;
+  final int maxLines;
 
   const _FormField({
     required this.controller,
     required this.label,
     required this.hint,
     this.validator,
+    this.maxLines = 1,
   });
 
   @override
@@ -1231,6 +1380,7 @@ class _FormField extends StatelessWidget {
         TextFormField(
           controller: controller,
           validator: validator,
+          maxLines: maxLines,
           style: const TextStyle(color: _white, fontSize: 14),
           decoration: InputDecoration(
             hintText: hint,
