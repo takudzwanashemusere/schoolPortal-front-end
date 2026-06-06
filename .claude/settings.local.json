@@ -10,7 +10,9 @@
       "Bash(python -m json.tool)",
       "Bash(pip show:*)",
       "Bash(mongod --version)",
-      "Skill(update-config)"
+      "Skill(update-config)",
+      "Bash(pkill -f \"uvicorn main:app\")",
+      "Bash(python -m uvicorn main:app --reload --port 8000)"
     ]
   }
 }

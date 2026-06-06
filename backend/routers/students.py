@@ -58,7 +58,7 @@ async def update_student(
 async def create_student(
     body: StudentCreateRequest,
     db: AsyncIOMotorDatabase = Depends(get_db),
-    _user=Depends(require_admin),
+    _user=Depends(require_admin_or_teacher),
 ):
     # Auto-generate student ID: lowest free C001, C002, ...
     existing = await db["students"].find(
