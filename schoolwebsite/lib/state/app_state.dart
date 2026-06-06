@@ -60,6 +60,7 @@ class AppState extends ChangeNotifier {
   // ── Load all live data from the API (called after login) ────────────────────
   Future<void> _loadFromApi() async {
     final api = ApiService.instance;
+    final isAdmin = _currentUser?.role == UserRole.admin;
     try {
       final results = await Future.wait([
         api.fetchTeachers(),
@@ -67,18 +68,20 @@ class AppState extends ChangeNotifier {
         api.fetchClasses(),
         api.fetchStudents(),
         api.fetchMarks(),
-        api.fetchSubmittedTeacherIds(),
-        api.fetchApplications(),
+        if (isAdmin) api.fetchSubmittedTeacherIds(),
+        if (isAdmin) api.fetchApplications(),
       ]);
       _teachers = results[0] as List<Teacher>;
       _subjects = results[1] as List<Subject>;
       _classes = results[2] as List<ClassGroup>;
       _students = results[3] as List<Student>;
       _marks = results[4] as List<Mark>;
-      _submittedTeacherIds = results[5] as Set<String>;
-      _applications
-        ..clear()
-        ..addAll(results[6] as List<StudentApplication>);
+      if (isAdmin) {
+        _submittedTeacherIds = results[5] as Set<String>;
+        _applications
+          ..clear()
+          ..addAll(results[6] as List<StudentApplication>);
+      }
     } catch (e) {
       // API unreachable — show empty data so no fake hardcoded data appears
       _teachers = [];

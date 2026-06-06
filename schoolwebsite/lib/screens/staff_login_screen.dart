@@ -4,15 +4,15 @@ import 'package:schoolwebsite/models/models.dart';
 import 'package:schoolwebsite/state/app_state_provider.dart';
 
 class StaffLoginScreen extends StatefulWidget {
-  const StaffLoginScreen({super.key});
+  final UserRole initialRole;
+  const StaffLoginScreen({super.key, this.initialRole = UserRole.admin});
 
   @override
   State<StaffLoginScreen> createState() => _StaffLoginScreenState();
 }
 
 class _StaffLoginScreenState extends State<StaffLoginScreen> {
-  // Staff can be admin or teacher
-  UserRole _selectedRole = UserRole.admin;
+  late UserRole _selectedRole = widget.initialRole;
   final _userIdController = TextEditingController();
   final _passwordController = TextEditingController();
   String? _errorMessage;
