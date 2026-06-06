@@ -246,6 +246,14 @@ class _MarksTable extends StatefulWidget {
 
 class _MarksTableState extends State<_MarksTable> {
   List<Student> _students = [];
+  String _searchQuery = '';
+
+  List<Student> get _filteredStudents => _searchQuery.isEmpty
+      ? _students
+      : _students
+          .where((s) =>
+              s.name.toLowerCase().contains(_searchQuery.toLowerCase()))
+          .toList();
 
   // Per-student controllers: lists indexed by column number
   final Map<String, List<TextEditingController>> _testControllers = {};
@@ -554,7 +562,9 @@ class _MarksTableState extends State<_MarksTable> {
                       style: AppTheme.heading2),
                   const SizedBox(height: 2),
                   Text(
-                      '${_students.length} students  •  $_testCount test${_testCount != 1 ? 's' : ''}  •  $_paperCount paper${_paperCount != 1 ? 's' : ''}',
+                      _searchQuery.isEmpty
+                          ? '${_students.length} students  •  $_testCount test${_testCount != 1 ? 's' : ''}  •  $_paperCount paper${_paperCount != 1 ? 's' : ''}'
+                          : '${_filteredStudents.length} of ${_students.length} students  •  searching "$_searchQuery"',
                       style: AppTheme.caption),
                 ],
               ),
@@ -567,6 +577,37 @@ class _MarksTableState extends State<_MarksTable> {
           ],
         ),
         const SizedBox(height: 14),
+
+        // ── Search bar ───────────────────────────────────────────────────
+        TextField(
+          onChanged: (v) => setState(() => _searchQuery = v),
+          style: const TextStyle(fontSize: 13),
+          decoration: InputDecoration(
+            isDense: true,
+            hintText: 'Search students by name...',
+            hintStyle: const TextStyle(
+                color: AppTheme.textSecondary, fontSize: 13),
+            prefixIcon: const Icon(Icons.search_rounded,
+                size: 16, color: AppTheme.textSecondary),
+            suffixIcon: _searchQuery.isNotEmpty
+                ? IconButton(
+                    icon: const Icon(Icons.clear_rounded, size: 16),
+                    color: AppTheme.textSecondary,
+                    onPressed: () => setState(() => _searchQuery = ''),
+                  )
+                : null,
+            contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12, vertical: 10),
+            border: const OutlineInputBorder(
+                borderSide: BorderSide(color: AppTheme.border)),
+            enabledBorder: const OutlineInputBorder(
+                borderSide: BorderSide(color: AppTheme.border)),
+            focusedBorder: const OutlineInputBorder(
+                borderSide: BorderSide(
+                    color: AppTheme.primaryLight, width: 1.5)),
+          ),
+        ),
+        const SizedBox(height: 12),
 
         // ── Column controls ──────────────────────────────────────────────
         Row(
@@ -669,12 +710,24 @@ class _MarksTableState extends State<_MarksTable> {
                 // Header
                 _buildHeader(),
                 // Student rows
-                ...(_students.asMap().entries.map((entry) {
-                  final i = entry.key;
-                  final student = entry.value;
-                  final isLast = i == _students.length - 1;
-                  return _buildRow(i, student, isLast);
-                })),
+                if (_filteredStudents.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.all(32),
+                    child: Text(
+                      _searchQuery.isEmpty
+                          ? 'No students found in this class.'
+                          : 'No students match "$_searchQuery".',
+                      style: const TextStyle(
+                          color: AppTheme.textSecondary, fontSize: 13),
+                    ),
+                  )
+                else
+                  ...(_filteredStudents.asMap().entries.map((entry) {
+                    final i = entry.key;
+                    final student = entry.value;
+                    final isLast = i == _filteredStudents.length - 1;
+                    return _buildRow(i, student, isLast);
+                  })),
               ],
             ),
           ),
@@ -937,6 +990,8 @@ class _NameField extends StatelessWidget {
     return TextField(
       controller: controller,
       style: const TextStyle(fontSize: 13),
+      textInputAction: TextInputAction.next,
+      onSubmitted: (_) => FocusScope.of(context).nextFocus(),
       decoration: const InputDecoration(
         isDense: true,
         contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
@@ -968,6 +1023,8 @@ class _MarkField extends StatelessWidget {
       ],
       style: const TextStyle(fontSize: 13),
       textAlign: TextAlign.center,
+      textInputAction: TextInputAction.next,
+      onSubmitted: (_) => FocusScope.of(context).nextFocus(),
       decoration: const InputDecoration(
         isDense: true,
         hintText: '—',
