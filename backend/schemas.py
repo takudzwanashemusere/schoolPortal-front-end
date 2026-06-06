@@ -5,8 +5,24 @@ from datetime import datetime
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
-def calc_final_mark(test: float, exam: float) -> float:
-    return round((test * 0.4) + (exam * 0.6), 2)
+def calc_term_mark(tests: list[float]) -> float:
+    """Average of all entered test scores."""
+    filled = [t for t in tests if t is not None]
+    if not filled:
+        return 0.0
+    return round(sum(filled) / len(filled), 2)
+
+
+def calc_exam_mark_avg(papers: list[float]) -> float:
+    """Average of all entered exam paper scores."""
+    filled = [p for p in papers if p is not None]
+    if not filled:
+        return 0.0
+    return round(sum(filled) / len(filled), 2)
+
+
+def calc_final_mark(term: float, exam: float) -> float:
+    return round((term * 0.4) + (exam * 0.6), 2)
 
 
 def calc_grade(final: float) -> str:
@@ -125,8 +141,8 @@ class MarkUpsertRequest(BaseModel):
     student_id: str
     subject_id: str
     class_id: str
-    test_mark: float
-    exam_mark: float
+    tests: list[float] = []
+    exam_papers: list[float] = []
 
 
 class MarkResponse(BaseModel):
@@ -135,7 +151,9 @@ class MarkResponse(BaseModel):
     student_id: str
     subject_id: str
     class_id: str
-    test_mark: float
+    tests: list[float] = []
+    exam_papers: list[float] = []
+    term_mark: float
     exam_mark: float
     final_mark: float
     grade: str
@@ -143,13 +161,25 @@ class MarkResponse(BaseModel):
 
 
 def mark_to_response(m) -> MarkResponse:
-    final = calc_final_mark(m["test_mark"], m["exam_mark"])
+    # Backward compat: old docs have test_mark/exam_mark floats
+    if "tests" in m:
+        tests = m.get("tests") or []
+        exam_papers = m.get("exam_papers") or []
+    else:
+        tests = [m["test_mark"]] if m.get("test_mark") is not None else []
+        exam_papers = [m["exam_mark"]] if m.get("exam_mark") is not None else []
+
+    term = calc_term_mark(tests)
+    exam = calc_exam_mark_avg(exam_papers)
+    final = calc_final_mark(term, exam)
     return MarkResponse(
         student_id=m["student_id"],
         subject_id=m["subject_id"],
         class_id=m["class_id"],
-        test_mark=m["test_mark"],
-        exam_mark=m["exam_mark"],
+        tests=tests,
+        exam_papers=exam_papers,
+        term_mark=term,
+        exam_mark=exam,
         final_mark=final,
         grade=calc_grade(final),
         is_passing=final >= 50,
@@ -217,7 +247,9 @@ class ApplicationResponse(BaseModel):
 class StudentMarkEntry(BaseModel):
     subject_id: str
     subject_name: str
-    test_mark: Optional[float] = None
+    tests: list[float] = []
+    exam_papers: list[float] = []
+    term_mark: Optional[float] = None
     exam_mark: Optional[float] = None
     final_mark: Optional[float] = None
     grade: Optional[str] = None

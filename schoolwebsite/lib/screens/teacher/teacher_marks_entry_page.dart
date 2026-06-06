@@ -21,7 +21,6 @@ class _TeacherMarksEntryPageState extends State<TeacherMarksEntryPage> {
     final state = AppStateProvider.of(context);
     final teacherId = state.currentUser?.linkedId ?? '';
 
-    // Read from mutable state so assignments made by admin are reflected
     final teacher = state.getTeacher(teacherId) ??
         const Teacher(id: '', name: '', subjectIds: [], classIds: []);
 
@@ -42,7 +41,7 @@ class _TeacherMarksEntryPageState extends State<TeacherMarksEntryPage> {
           const Text('Marks Entry', style: AppTheme.heading1),
           const SizedBox(height: 4),
           const Text(
-            'Select a class and subject to enter student marks.',
+            'Select a class and subject, then enter test and exam paper scores.',
             style: AppTheme.label,
           ),
           const SizedBox(height: 28),
@@ -66,129 +65,27 @@ class _TeacherMarksEntryPageState extends State<TeacherMarksEntryPage> {
                           color: AppTheme.textSecondary, fontSize: 14),
                     ),
                   )
-                : Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      // Class selector
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text('Class', style: AppTheme.heading3),
-                            const SizedBox(height: 8),
-                            Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(6),
-                                border: const Border.fromBorderSide(
-                                    BorderSide(color: AppTheme.border)),
-                              ),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12),
-                              child: DropdownButtonHideUnderline(
-                                child: DropdownButton<String>(
-                                  value: _selectedClassId,
-                                  isExpanded: true,
-                                  hint: const Text(
-                                    'Select class',
-                                    style: TextStyle(
-                                        color: AppTheme.textSecondary,
-                                        fontSize: 13),
-                                  ),
-                                  items: teacherClasses
-                                      .map((c) => DropdownMenuItem<String>(
-                                            value: c.id,
-                                            child: Text(c.name,
-                                                style: const TextStyle(
-                                                    fontSize: 14)),
-                                          ))
-                                      .toList(),
-                                  onChanged: (v) => setState(() {
-                                    _selectedClassId = v;
-                                    _selectedSubjectId = null;
-                                  }),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+                : isMobile
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildClassDropdown(teacherClasses),
+                          const SizedBox(height: 16),
+                          _buildSubjectDropdown(teacherSubjects),
+                          const SizedBox(height: 16),
+                          _buildCalcNote(),
+                        ],
+                      )
+                    : Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Expanded(child: _buildClassDropdown(teacherClasses)),
+                          const SizedBox(width: 20),
+                          Expanded(child: _buildSubjectDropdown(teacherSubjects)),
+                          const SizedBox(width: 20),
+                          Expanded(child: _buildCalcNote()),
+                        ],
                       ),
-                      const SizedBox(width: 20),
-                      // Subject selector
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text('Subject', style: AppTheme.heading3),
-                            const SizedBox(height: 8),
-                            Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(6),
-                                border: const Border.fromBorderSide(
-                                    BorderSide(color: AppTheme.border)),
-                              ),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12),
-                              child: DropdownButtonHideUnderline(
-                                child: DropdownButton<String>(
-                                  value: _selectedSubjectId,
-                                  isExpanded: true,
-                                  hint: const Text(
-                                    'Select subject',
-                                    style: TextStyle(
-                                        color: AppTheme.textSecondary,
-                                        fontSize: 13),
-                                  ),
-                                  items: teacherSubjects
-                                      .map((s) => DropdownMenuItem<String>(
-                                            value: s.id,
-                                            child: Text(s.name,
-                                                style: const TextStyle(
-                                                    fontSize: 14)),
-                                          ))
-                                      .toList(),
-                                  onChanged: (v) =>
-                                      setState(() => _selectedSubjectId = v),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 20),
-                      // Info note
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF0F9FF),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: const Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Mark Calculation',
-                                style: TextStyle(
-                                  color: Color(0xFF0369A1),
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              SizedBox(height: 4),
-                              Text(
-                                'Final = Test (40%) + Exam (60%)\nMarks must be between 0 and 100.',
-                                style: TextStyle(
-                                  color: Color(0xFF0369A1),
-                                  fontSize: 11,
-                                  height: 1.5,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
           ),
           const SizedBox(height: 24),
 
@@ -211,7 +108,6 @@ class _TeacherMarksEntryPageState extends State<TeacherMarksEntryPage> {
               ),
             )
           else
-            // ValueKey forces a full rebuild whenever class or subject changes
             _MarksTable(
               key: ValueKey('$_selectedClassId:$_selectedSubjectId'),
               classId: _selectedClassId!,
@@ -222,10 +118,114 @@ class _TeacherMarksEntryPageState extends State<TeacherMarksEntryPage> {
       ),
     );
   }
+
+  Widget _buildClassDropdown(List<ClassGroup> classes) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Class', style: AppTheme.heading3),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(6),
+            border: const Border.fromBorderSide(
+                BorderSide(color: AppTheme.border)),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: _selectedClassId,
+              isExpanded: true,
+              hint: const Text('Select class',
+                  style: TextStyle(
+                      color: AppTheme.textSecondary, fontSize: 13)),
+              items: classes
+                  .map((c) => DropdownMenuItem<String>(
+                        value: c.id,
+                        child: Text(c.name,
+                            style: const TextStyle(fontSize: 14)),
+                      ))
+                  .toList(),
+              onChanged: (v) => setState(() {
+                _selectedClassId = v;
+                _selectedSubjectId = null;
+              }),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSubjectDropdown(List<Subject> subjects) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Subject', style: AppTheme.heading3),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(6),
+            border: const Border.fromBorderSide(
+                BorderSide(color: AppTheme.border)),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: _selectedSubjectId,
+              isExpanded: true,
+              hint: const Text('Select subject',
+                  style: TextStyle(
+                      color: AppTheme.textSecondary, fontSize: 13)),
+              items: subjects
+                  .map((s) => DropdownMenuItem<String>(
+                        value: s.id,
+                        child: Text(s.name,
+                            style: const TextStyle(fontSize: 14)),
+                      ))
+                  .toList(),
+              onChanged: (v) =>
+                  setState(() => _selectedSubjectId = v),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCalcNote() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0F9FF),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Mark Calculation',
+            style: TextStyle(
+              color: Color(0xFF0369A1),
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          SizedBox(height: 4),
+          Text(
+            'Term = avg of all tests\nExam = avg of all papers\nFinal = Term(40%) + Exam(60%)',
+            style: TextStyle(
+              color: Color(0xFF0369A1),
+              fontSize: 11,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Inner widget: owns the student list + text controllers
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _MarksTable extends StatefulWidget {
@@ -246,8 +246,14 @@ class _MarksTable extends StatefulWidget {
 
 class _MarksTableState extends State<_MarksTable> {
   List<Student> _students = [];
-  final Map<String, List<TextEditingController>> _controllers = {};
+
+  // Per-student controllers: lists indexed by column number
+  final Map<String, List<TextEditingController>> _testControllers = {};
+  final Map<String, List<TextEditingController>> _examControllers = {};
   final Map<String, TextEditingController> _nameControllers = {};
+
+  int _testCount = 1;
+  int _paperCount = 1;
 
   @override
   void initState() {
@@ -262,15 +268,15 @@ class _MarksTableState extends State<_MarksTable> {
   }
 
   void _disposeAll() {
-    for (final list in _controllers.values) {
-      for (final c in list) {
-        c.dispose();
-      }
+    for (final list in _testControllers.values) {
+      for (final c in list) c.dispose();
     }
-    _controllers.clear();
-    for (final c in _nameControllers.values) {
-      c.dispose();
+    _testControllers.clear();
+    for (final list in _examControllers.values) {
+      for (final c in list) c.dispose();
     }
+    _examControllers.clear();
+    for (final c in _nameControllers.values) c.dispose();
     _nameControllers.clear();
   }
 
@@ -278,41 +284,121 @@ class _MarksTableState extends State<_MarksTable> {
     final state = AppStateProvider.read(context);
     _students = state.getStudentsInClass(widget.classId);
 
+    // Determine column counts from existing marks
+    int maxTests = 1;
+    int maxPapers = 1;
+    for (final student in _students) {
+      final mark = state.getMark(student.id, widget.subjectId);
+      if (mark != null) {
+        if (mark.tests.length > maxTests) maxTests = mark.tests.length;
+        if (mark.examPapers.length > maxPapers) maxPapers = mark.examPapers.length;
+      }
+    }
+    _testCount = maxTests;
+    _paperCount = maxPapers;
+
     for (final student in _students) {
       final mark = state.getMark(student.id, widget.subjectId);
 
-      final testCtrl = TextEditingController(
-        text: mark != null && mark.testMark > 0
-            ? mark.testMark.toStringAsFixed(0)
-            : '',
-      );
-      final examCtrl = TextEditingController(
-        text: mark != null && mark.examMark > 0
-            ? mark.examMark.toStringAsFixed(0)
-            : '',
-      );
+      _testControllers[student.id] = List.generate(_testCount, (i) {
+        final val = mark != null && i < mark.tests.length && mark.tests[i] > 0
+            ? mark.tests[i].toStringAsFixed(0)
+            : '';
+        final ctrl = TextEditingController(text: val);
+        ctrl.addListener(() => setState(() {}));
+        return ctrl;
+      });
 
-      testCtrl.addListener(() => setState(() {}));
-      examCtrl.addListener(() => setState(() {}));
+      _examControllers[student.id] = List.generate(_paperCount, (i) {
+        final val = mark != null && i < mark.examPapers.length && mark.examPapers[i] > 0
+            ? mark.examPapers[i].toStringAsFixed(0)
+            : '';
+        final ctrl = TextEditingController(text: val);
+        ctrl.addListener(() => setState(() {}));
+        return ctrl;
+      });
 
-      _controllers[student.id] = [testCtrl, examCtrl];
-      _nameControllers[student.id] =
-          TextEditingController(text: student.name);
+      _nameControllers[student.id] = TextEditingController(text: student.name);
     }
   }
 
-  double? _computedFinal(String studentId) {
-    final ctrls = _controllers[studentId];
-    if (ctrls == null) return null;
-    final test = double.tryParse(ctrls[0].text);
-    final exam = double.tryParse(ctrls[1].text);
-    if (test == null || exam == null) return null;
-    if (test < 0 || test > 100 || exam < 0 || exam > 100) return null;
-    return (test * 0.4) + (exam * 0.6);
+  void _addTest() {
+    setState(() {
+      _testCount++;
+      for (final student in _students) {
+        final ctrl = TextEditingController();
+        ctrl.addListener(() => setState(() {}));
+        _testControllers[student.id]!.add(ctrl);
+      }
+    });
   }
 
-  String _computedGrade(String studentId) {
-    final f = _computedFinal(studentId);
+  void _removeTest() {
+    if (_testCount <= 1) return;
+    setState(() {
+      _testCount--;
+      for (final student in _students) {
+        final last = _testControllers[student.id]!.removeLast();
+        last.dispose();
+      }
+    });
+  }
+
+  void _addPaper() {
+    setState(() {
+      _paperCount++;
+      for (final student in _students) {
+        final ctrl = TextEditingController();
+        ctrl.addListener(() => setState(() {}));
+        _examControllers[student.id]!.add(ctrl);
+      }
+    });
+  }
+
+  void _removePaper() {
+    if (_paperCount <= 1) return;
+    setState(() {
+      _paperCount--;
+      for (final student in _students) {
+        final last = _examControllers[student.id]!.removeLast();
+        last.dispose();
+      }
+    });
+  }
+
+  double? _termMark(String studentId) {
+    final ctrls = _testControllers[studentId];
+    if (ctrls == null || ctrls.isEmpty) return null;
+    final vals = ctrls
+        .map((c) => double.tryParse(c.text.trim()))
+        .whereType<double>()
+        .toList();
+    if (vals.isEmpty) return null;
+    if (vals.any((v) => v < 0 || v > 100)) return null;
+    return vals.reduce((a, b) => a + b) / vals.length;
+  }
+
+  double? _examMark(String studentId) {
+    final ctrls = _examControllers[studentId];
+    if (ctrls == null || ctrls.isEmpty) return null;
+    final vals = ctrls
+        .map((c) => double.tryParse(c.text.trim()))
+        .whereType<double>()
+        .toList();
+    if (vals.isEmpty) return null;
+    if (vals.any((v) => v < 0 || v > 100)) return null;
+    return vals.reduce((a, b) => a + b) / vals.length;
+  }
+
+  double? _finalMark(String studentId) {
+    final t = _termMark(studentId);
+    final e = _examMark(studentId);
+    if (t == null || e == null) return null;
+    return (t * 0.4) + (e * 0.6);
+  }
+
+  String _grade(String studentId) {
+    final f = _finalMark(studentId);
     if (f == null) return '—';
     if (f >= 80) return 'A';
     if (f >= 70) return 'B';
@@ -326,38 +412,49 @@ class _MarksTableState extends State<_MarksTable> {
     bool hasErrors = false;
 
     for (final student in _students) {
-      final ctrls = _controllers[student.id];
-      if (ctrls == null) continue;
-
-      final testText = ctrls[0].text.trim();
-      final examText = ctrls[1].text.trim();
-
       final newName = _nameControllers[student.id]?.text.trim() ?? '';
       if (newName.isNotEmpty && newName != student.name) {
         await state.updateStudentName(student.id, newName);
       }
 
-      if (testText.isEmpty && examText.isEmpty) continue;
+      final testCtrls = _testControllers[student.id] ?? [];
+      final examCtrls = _examControllers[student.id] ?? [];
 
-      final test = double.tryParse(testText);
-      final exam = double.tryParse(examText);
+      if (testCtrls.every((c) => c.text.trim().isEmpty) &&
+          examCtrls.every((c) => c.text.trim().isEmpty)) continue;
 
-      if (test == null ||
-          exam == null ||
-          test < 0 ||
-          test > 100 ||
-          exam < 0 ||
-          exam > 100) {
-        hasErrors = true;
-        continue;
+      final tests = <double>[];
+      for (final ctrl in testCtrls) {
+        final t = double.tryParse(ctrl.text.trim());
+        if (ctrl.text.trim().isEmpty) {
+          tests.add(0);
+        } else if (t == null || t < 0 || t > 100) {
+          hasErrors = true;
+          tests.add(0);
+        } else {
+          tests.add(t);
+        }
+      }
+
+      final examPapers = <double>[];
+      for (final ctrl in examCtrls) {
+        final p = double.tryParse(ctrl.text.trim());
+        if (ctrl.text.trim().isEmpty) {
+          examPapers.add(0);
+        } else if (p == null || p < 0 || p > 100) {
+          hasErrors = true;
+          examPapers.add(0);
+        } else {
+          examPapers.add(p);
+        }
       }
 
       await state.upsertMark(Mark(
         studentId: student.id,
         subjectId: widget.subjectId,
         classId: widget.classId,
-        testMark: test,
-        examMark: exam,
+        tests: tests,
+        examPapers: examPapers,
       ));
     }
 
@@ -367,8 +464,7 @@ class _MarksTableState extends State<_MarksTable> {
     if (hasErrors) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-              'Some marks were invalid (must be 0–100) and were skipped.'),
+          content: Text('Some invalid marks (must be 0–100) were set to 0.'),
         ),
       );
     } else {
@@ -380,7 +476,7 @@ class _MarksTableState extends State<_MarksTable> {
 
   Widget _buildSummaryRow() {
     final computed = _students
-        .map((s) => _computedFinal(s.id))
+        .map((s) => _finalMark(s.id))
         .whereType<double>()
         .toList();
     if (computed.isEmpty) return const SizedBox.shrink();
@@ -394,8 +490,8 @@ class _MarksTableState extends State<_MarksTable> {
       decoration: BoxDecoration(
         color: const Color(0xFFF0F9FF),
         borderRadius: BorderRadius.circular(8),
-        border:
-            const Border.fromBorderSide(BorderSide(color: Color(0xFFBAE6FD))),
+        border: const Border.fromBorderSide(
+            BorderSide(color: Color(0xFFBAE6FD))),
       ),
       child: Row(
         children: [
@@ -403,10 +499,12 @@ class _MarksTableState extends State<_MarksTable> {
               label: 'Entered',
               value: '${computed.length} / ${_students.length}'),
           const SizedBox(width: 32),
-          _SummaryItem(label: 'Class Average', value: avg.toStringAsFixed(1)),
+          _SummaryItem(
+              label: 'Class Average', value: avg.toStringAsFixed(1)),
           const SizedBox(width: 32),
           _SummaryItem(
-              label: 'Pass Rate', value: '${passRate.toStringAsFixed(1)}%'),
+              label: 'Pass Rate',
+              value: '${passRate.toStringAsFixed(1)}%'),
           const SizedBox(width: 32),
           _SummaryItem(label: 'Passing', value: '$passing'),
           const SizedBox(width: 32),
@@ -431,13 +529,13 @@ class _MarksTableState extends State<_MarksTable> {
         decoration: BoxDecoration(
           color: AppTheme.surface,
           borderRadius: BorderRadius.circular(8),
-          border: const Border.fromBorderSide(BorderSide(color: AppTheme.border)),
+          border: const Border.fromBorderSide(
+              BorderSide(color: AppTheme.border)),
         ),
         child: const Center(
-          child: Text(
-            'No students found in this class.',
-            style: TextStyle(color: AppTheme.textSecondary, fontSize: 14),
-          ),
+          child: Text('No students found in this class.',
+              style: TextStyle(
+                  color: AppTheme.textSecondary, fontSize: 14)),
         ),
       );
     }
@@ -445,22 +543,19 @@ class _MarksTableState extends State<_MarksTable> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Section header row
+        // ── Header row ──────────────────────────────────────────────────
         Row(
           children: [
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    '$className  —  $subjectName',
-                    style: AppTheme.heading2,
-                  ),
+                  Text('$className  —  $subjectName',
+                      style: AppTheme.heading2),
                   const SizedBox(height: 2),
                   Text(
-                    '${_students.length} students  •  Editable fields',
-                    style: AppTheme.caption,
-                  ),
+                      '${_students.length} students  •  $_testCount test${_testCount != 1 ? 's' : ''}  •  $_paperCount paper${_paperCount != 1 ? 's' : ''}',
+                      style: AppTheme.caption),
                 ],
               ),
             ),
@@ -473,139 +568,115 @@ class _MarksTableState extends State<_MarksTable> {
         ),
         const SizedBox(height: 14),
 
-        // Table header
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: const BoxDecoration(
-            color: Color(0xFFF8FAFC),
-            borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
-            border: Border(
-              top: BorderSide(color: AppTheme.border),
-              left: BorderSide(color: AppTheme.border),
-              right: BorderSide(color: AppTheme.border),
-              bottom: BorderSide(color: AppTheme.border),
+        // ── Column controls ──────────────────────────────────────────────
+        Row(
+          children: [
+            // Tests controls
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEFF6FF),
+                borderRadius: BorderRadius.circular(6),
+                border: const Border.fromBorderSide(
+                    BorderSide(color: Color(0xFFBFDBFE))),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.edit_note_rounded,
+                      size: 14, color: Color(0xFF2563EB)),
+                  const SizedBox(width: 6),
+                  const Text('Tests',
+                      style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF2563EB),
+                          fontWeight: FontWeight.w600)),
+                  const SizedBox(width: 10),
+                  _CountButton(
+                      icon: Icons.remove,
+                      onTap: _testCount > 1 ? _removeTest : null),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Text('$_testCount',
+                        style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1D4ED8))),
+                  ),
+                  _CountButton(
+                      icon: Icons.add, onTap: _testCount < 6 ? _addTest : null),
+                ],
+              ),
             ),
-          ),
-          child: Row(
-            children: const [
-              SizedBox(width: 36, child: _ColHeader('#')),
-              SizedBox(width: 16),
-              Expanded(flex: 3, child: _ColHeader('STUDENT NAME')),
-              SizedBox(width: 16),
-              Expanded(flex: 2, child: _ColHeader('TEST MARK (0–100)')),
-              SizedBox(width: 12),
-              Expanded(flex: 2, child: _ColHeader('EXAM MARK (0–100)')),
-              SizedBox(width: 12),
-              SizedBox(width: 72, child: _ColHeader('FINAL')),
-              SizedBox(width: 12),
-              SizedBox(width: 48, child: _ColHeader('GRADE')),
-            ],
-          ),
+            const SizedBox(width: 12),
+            // Papers controls
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF7ED),
+                borderRadius: BorderRadius.circular(6),
+                border: const Border.fromBorderSide(
+                    BorderSide(color: Color(0xFFFED7AA))),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.article_outlined,
+                      size: 14, color: Color(0xFFEA580C)),
+                  const SizedBox(width: 6),
+                  const Text('Exam Papers',
+                      style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFFEA580C),
+                          fontWeight: FontWeight.w600)),
+                  const SizedBox(width: 10),
+                  _CountButton(
+                      icon: Icons.remove,
+                      color: const Color(0xFFEA580C),
+                      onTap: _paperCount > 1 ? _removePaper : null),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Text('$_paperCount',
+                        style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFFC2410C))),
+                  ),
+                  _CountButton(
+                      icon: Icons.add,
+                      color: const Color(0xFFEA580C),
+                      onTap: _paperCount < 6 ? _addPaper : null),
+                ],
+              ),
+            ),
+          ],
         ),
+        const SizedBox(height: 12),
 
-        // Table rows
+        // ── Table (horizontally scrollable) ──────────────────────────────
         Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: AppTheme.surface,
-            borderRadius: BorderRadius.vertical(bottom: Radius.circular(8)),
-            border: Border(
-              left: BorderSide(color: AppTheme.border),
-              right: BorderSide(color: AppTheme.border),
-              bottom: BorderSide(color: AppTheme.border),
-            ),
+            borderRadius: BorderRadius.circular(8),
+            border: const Border.fromBorderSide(
+                BorderSide(color: AppTheme.border)),
           ),
-          child: Column(
-            children: _students.asMap().entries.map((entry) {
-              final i = entry.key;
-              final student = entry.value;
-              final ctrls = _controllers[student.id];
-              final finalMark = _computedFinal(student.id);
-              final grade = _computedGrade(student.id);
-              final isLast = i == _students.length - 1;
-
-              return Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                decoration: BoxDecoration(
-                  color:
-                      i.isEven ? AppTheme.surface : const Color(0xFFFAFAFA),
-                  border: !isLast
-                      ? const Border(
-                          bottom: BorderSide(color: AppTheme.border))
-                      : null,
-                ),
-                child: Row(
-                  children: [
-                    SizedBox(
-                      width: 36,
-                      child:
-                          Text('${i + 1}', style: AppTheme.caption),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      flex: 3,
-                      child: TextField(
-                        controller: _nameControllers[student.id],
-                        style: const TextStyle(fontSize: 13),
-                        decoration: const InputDecoration(
-                          isDense: true,
-                          contentPadding: EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 8),
-                          border: OutlineInputBorder(
-                            borderSide:
-                                BorderSide(color: AppTheme.border),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderSide:
-                                BorderSide(color: AppTheme.border),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(
-                                color: AppTheme.primaryLight, width: 1.5),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      flex: 2,
-                      child: _MarkField(controller: ctrls?[0]),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      flex: 2,
-                      child: _MarkField(controller: ctrls?[1]),
-                    ),
-                    const SizedBox(width: 12),
-                    SizedBox(
-                      width: 72,
-                      child: Text(
-                        finalMark != null
-                            ? finalMark.toStringAsFixed(1)
-                            : '—',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: finalMark != null
-                              ? AppTheme.textPrimary
-                              : AppTheme.textSecondary,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    SizedBox(
-                      width: 48,
-                      child: grade == '—'
-                          ? const Text('—',
-                              style: TextStyle(
-                                  color: AppTheme.textSecondary,
-                                  fontSize: 14))
-                          : GradeBadge(grade: grade),
-                    ),
-                  ],
-                ),
-              );
-            }).toList(),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
+                _buildHeader(),
+                // Student rows
+                ...(_students.asMap().entries.map((entry) {
+                  final i = entry.key;
+                  final student = entry.value;
+                  final isLast = i == _students.length - 1;
+                  return _buildRow(i, student, isLast);
+                })),
+              ],
+            ),
           ),
         ),
         const SizedBox(height: 16),
@@ -614,23 +685,268 @@ class _MarksTableState extends State<_MarksTable> {
       ],
     );
   }
+
+  static const double _numW = 36;
+  static const double _nameW = 180;
+  static const double _fieldW = 78;
+  static const double _computedW = 72;
+  static const double _gradeW = 52;
+  static const double _sepW = 8;
+
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+      decoration: const BoxDecoration(
+        color: Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
+        border: Border(bottom: BorderSide(color: AppTheme.border)),
+      ),
+      child: Row(
+        children: [
+          SizedBox(width: _numW, child: const _ColHeader('#')),
+          const SizedBox(width: 12),
+          SizedBox(width: _nameW, child: const _ColHeader('STUDENT NAME')),
+          const SizedBox(width: 12),
+          // Test columns
+          ...List.generate(_testCount, (i) => Padding(
+                padding: EdgeInsets.only(right: i < _testCount - 1 ? 8 : 0),
+                child: SizedBox(
+                  width: _fieldW,
+                  child: _ColHeader(
+                    'TEST ${i + 1}',
+                    color: const Color(0xFF2563EB),
+                  ),
+                ),
+              )),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: _computedW,
+            child: const _ColHeader('TERM\n(40%)',
+                color: Color(0xFF1D4ED8)),
+          ),
+          SizedBox(width: _sepW),
+          // Paper columns
+          ...List.generate(_paperCount, (i) => Padding(
+                padding: EdgeInsets.only(right: i < _paperCount - 1 ? 8 : 0),
+                child: SizedBox(
+                  width: _fieldW,
+                  child: _ColHeader(
+                    'PAPER ${i + 1}',
+                    color: const Color(0xFFEA580C),
+                  ),
+                ),
+              )),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: _computedW,
+            child: const _ColHeader('EXAM\n(60%)',
+                color: Color(0xFFC2410C)),
+          ),
+          const SizedBox(width: 8),
+          SizedBox(width: _computedW, child: const _ColHeader('FINAL')),
+          const SizedBox(width: 8),
+          SizedBox(width: _gradeW, child: const _ColHeader('GRADE')),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRow(int i, Student student, bool isLast) {
+    final testCtrls = _testControllers[student.id] ?? [];
+    final examCtrls = _examControllers[student.id] ?? [];
+    final term = _termMark(student.id);
+    final exam = _examMark(student.id);
+    final finalMk = _finalMark(student.id);
+    final grade = _grade(student.id);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: i.isEven ? AppTheme.surface : const Color(0xFFFAFAFA),
+        borderRadius: isLast
+            ? const BorderRadius.vertical(bottom: Radius.circular(8))
+            : null,
+        border: !isLast
+            ? const Border(bottom: BorderSide(color: AppTheme.border))
+            : null,
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: _numW,
+            child: Text('${i + 1}', style: AppTheme.caption),
+          ),
+          const SizedBox(width: 12),
+          SizedBox(
+            width: _nameW,
+            child: _NameField(controller: _nameControllers[student.id]),
+          ),
+          const SizedBox(width: 12),
+          // Test fields
+          ...List.generate(_testCount, (j) => Padding(
+                padding: EdgeInsets.only(right: j < _testCount - 1 ? 8 : 0),
+                child: SizedBox(
+                  width: _fieldW,
+                  child: _MarkField(controller: testCtrls.length > j ? testCtrls[j] : null),
+                ),
+              )),
+          const SizedBox(width: 8),
+          // TERM (computed)
+          SizedBox(
+            width: _computedW,
+            child: _ComputedCell(
+              value: term,
+              color: const Color(0xFF1D4ED8),
+              bg: const Color(0xFFEFF6FF),
+            ),
+          ),
+          SizedBox(width: _sepW),
+          // Paper fields
+          ...List.generate(_paperCount, (j) => Padding(
+                padding: EdgeInsets.only(right: j < _paperCount - 1 ? 8 : 0),
+                child: SizedBox(
+                  width: _fieldW,
+                  child: _MarkField(controller: examCtrls.length > j ? examCtrls[j] : null),
+                ),
+              )),
+          const SizedBox(width: 8),
+          // EXAM (computed)
+          SizedBox(
+            width: _computedW,
+            child: _ComputedCell(
+              value: exam,
+              color: const Color(0xFFC2410C),
+              bg: const Color(0xFFFFF7ED),
+            ),
+          ),
+          const SizedBox(width: 8),
+          // FINAL
+          SizedBox(
+            width: _computedW,
+            child: Text(
+              finalMk != null ? finalMk.toStringAsFixed(1) : '—',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: finalMk != null
+                    ? AppTheme.textPrimary
+                    : AppTheme.textSecondary,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          // GRADE
+          SizedBox(
+            width: _gradeW,
+            child: grade == '—'
+                ? const Text('—',
+                    style: TextStyle(
+                        color: AppTheme.textSecondary, fontSize: 14))
+                : GradeBadge(grade: grade),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
-// ─── Small helper widgets ─────────────────────────────────────────────────────
+// ─── Helper widgets ───────────────────────────────────────────────────────────
 
 class _ColHeader extends StatelessWidget {
   final String text;
-  const _ColHeader(this.text);
+  final Color? color;
+  const _ColHeader(this.text, {this.color});
 
   @override
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: const TextStyle(
-        fontSize: 11,
+      style: TextStyle(
+        fontSize: 10,
         fontWeight: FontWeight.w700,
-        color: AppTheme.textSecondary,
+        color: color ?? AppTheme.textSecondary,
         letterSpacing: 0.4,
+        height: 1.4,
+      ),
+    );
+  }
+}
+
+class _CountButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback? onTap;
+  final Color? color;
+
+  const _CountButton({required this.icon, this.onTap, this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = color ?? const Color(0xFF2563EB);
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 22,
+        height: 22,
+        decoration: BoxDecoration(
+          color: onTap != null ? c.withValues(alpha: 0.12) : Colors.grey.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Icon(icon,
+            size: 14,
+            color: onTap != null ? c : Colors.grey),
+      ),
+    );
+  }
+}
+
+class _ComputedCell extends StatelessWidget {
+  final double? value;
+  final Color color;
+  final Color bg;
+
+  const _ComputedCell(
+      {required this.value, required this.color, required this.bg});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+      decoration: BoxDecoration(
+        color: value != null ? bg : Colors.transparent,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        value != null ? value!.toStringAsFixed(1) : '—',
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: value != null ? color : AppTheme.textSecondary,
+        ),
+      ),
+    );
+  }
+}
+
+class _NameField extends StatelessWidget {
+  final TextEditingController? controller;
+  const _NameField({this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      style: const TextStyle(fontSize: 13),
+      decoration: const InputDecoration(
+        isDense: true,
+        contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        border: OutlineInputBorder(
+            borderSide: BorderSide(color: AppTheme.border)),
+        enabledBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: AppTheme.border)),
+        focusedBorder: OutlineInputBorder(
+            borderSide:
+                BorderSide(color: AppTheme.primaryLight, width: 1.5)),
       ),
     );
   }
@@ -644,28 +960,28 @@ class _MarkField extends StatelessWidget {
   Widget build(BuildContext context) {
     return TextField(
       controller: controller,
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      keyboardType:
+          const TextInputType.numberWithOptions(decimal: true),
       inputFormatters: [
-        FilteringTextInputFormatter.allow(RegExp(r'^\d{0,3}(\.\d{0,1})?')),
+        FilteringTextInputFormatter.allow(
+            RegExp(r'^\d{0,3}(\.\d{0,1})?')),
       ],
       style: const TextStyle(fontSize: 13),
       textAlign: TextAlign.center,
       decoration: const InputDecoration(
         isDense: true,
-        hintText: '0',
-        hintStyle:
-            TextStyle(color: AppTheme.textSecondary, fontSize: 13),
-        contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        hintText: '—',
+        hintStyle: TextStyle(
+            color: AppTheme.textSecondary, fontSize: 13),
+        contentPadding:
+            EdgeInsets.symmetric(horizontal: 6, vertical: 8),
         border: OutlineInputBorder(
-          borderSide: BorderSide(color: AppTheme.border),
-        ),
+            borderSide: BorderSide(color: AppTheme.border)),
         enabledBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: AppTheme.border),
-        ),
+            borderSide: BorderSide(color: AppTheme.border)),
         focusedBorder: OutlineInputBorder(
-          borderSide:
-              BorderSide(color: AppTheme.primaryLight, width: 1.5),
-        ),
+            borderSide:
+                BorderSide(color: AppTheme.primaryLight, width: 1.5)),
       ),
     );
   }

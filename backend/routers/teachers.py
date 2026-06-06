@@ -9,7 +9,7 @@ from dependencies import require_admin_or_teacher, require_admin
 from schemas import (
     TeacherResponse, TeacherPassRateResponse, TeacherCreateRequest,
     TeacherCreateResponse, TeacherUpdateClassesRequest,
-    TeacherUpdateSubjectsRequest, calc_final_mark,
+    TeacherUpdateSubjectsRequest, mark_to_response,
 )
 
 router = APIRouter()
@@ -42,7 +42,7 @@ async def compute_pass_rate(teacher_id: str, db: AsyncIOMotorDatabase) -> Option
     if not marks:
         return None
 
-    passing = sum(1 for m in marks if calc_final_mark(m["test_mark"], m["exam_mark"]) >= 50)
+    passing = sum(1 for m in marks if mark_to_response(m).is_passing)
     return round((passing / len(marks)) * 100, 1)
 
 

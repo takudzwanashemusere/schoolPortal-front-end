@@ -126,18 +126,30 @@ class Mark {
   final String studentId;
   final String subjectId;
   final String classId;
-  final double testMark;
-  final double examMark;
+  final List<double> tests;
+  final List<double> examPapers;
 
   const Mark({
     required this.studentId,
     required this.subjectId,
     required this.classId,
-    this.testMark = 0,
-    this.examMark = 0,
+    this.tests = const [],
+    this.examPapers = const [],
   });
 
-  double get finalMark => (testMark * 0.4) + (examMark * 0.6);
+  double get termMark {
+    final filled = tests.where((t) => t > 0).toList();
+    if (filled.isEmpty) return 0.0;
+    return filled.reduce((a, b) => a + b) / filled.length;
+  }
+
+  double get examMark {
+    final filled = examPapers.where((p) => p > 0).toList();
+    if (filled.isEmpty) return 0.0;
+    return filled.reduce((a, b) => a + b) / filled.length;
+  }
+
+  double get finalMark => (termMark * 0.4) + (examMark * 0.6);
 
   String get grade {
     final m = finalMark;
@@ -150,13 +162,13 @@ class Mark {
 
   bool get isPassing => finalMark >= 50;
 
-  Mark copyWith({double? testMark, double? examMark}) {
+  Mark copyWith({List<double>? tests, List<double>? examPapers}) {
     return Mark(
       studentId: studentId,
       subjectId: subjectId,
       classId: classId,
-      testMark: testMark ?? this.testMark,
-      examMark: examMark ?? this.examMark,
+      tests: tests ?? List.from(this.tests),
+      examPapers: examPapers ?? List.from(this.examPapers),
     );
   }
 }

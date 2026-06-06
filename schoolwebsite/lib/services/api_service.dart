@@ -130,8 +130,12 @@ class ApiService {
           studentId: d['student_id'],
           subjectId: d['subject_id'],
           classId: d['class_id'],
-          testMark: (d['test_mark'] as num).toDouble(),
-          examMark: (d['exam_mark'] as num).toDouble(),
+          tests: (d['tests'] as List? ?? [])
+              .map((v) => (v as num).toDouble())
+              .toList(),
+          examPapers: (d['exam_papers'] as List? ?? [])
+              .map((v) => (v as num).toDouble())
+              .toList(),
         )).toList();
   }
 
@@ -234,8 +238,8 @@ class ApiService {
       'student_id': mark.studentId,
       'subject_id': mark.subjectId,
       'class_id': mark.classId,
-      'test_mark': mark.testMark,
-      'exam_mark': mark.examMark,
+      'tests': mark.tests,
+      'exam_papers': mark.examPapers,
     });
   }
 

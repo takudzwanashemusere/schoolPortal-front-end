@@ -157,7 +157,7 @@ class StudentDashboardPage extends StatelessWidget {
             AppTable(
               headers: const [
                 'SUBJECT',
-                'TEST MARK',
+                'TERM MARK',
                 'EXAM MARK',
                 'FINAL MARK',
                 'GRADE',
@@ -169,9 +169,9 @@ class StudentDashboardPage extends StatelessWidget {
                   Text(e.subject.name,
                       style: const TextStyle(
                           fontSize: 14, fontWeight: FontWeight.w500)),
-                  Text(mark.testMark.toStringAsFixed(0),
+                  Text(mark.termMark.toStringAsFixed(1),
                       style: AppTheme.body),
-                  Text(mark.examMark.toStringAsFixed(0),
+                  Text(mark.examMark.toStringAsFixed(1),
                       style: AppTheme.body),
                   Text(
                     mark.finalMark.toStringAsFixed(1),

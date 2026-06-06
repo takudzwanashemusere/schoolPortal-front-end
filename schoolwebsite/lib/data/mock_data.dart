@@ -106,7 +106,7 @@ const List<Student> mockStudents = [
 // t3 and t4 have NOT submitted marks yet
 
 Mark _m(String sid, String subid, String cid, double test, double exam) =>
-    Mark(studentId: sid, subjectId: subid, classId: cid, testMark: test, examMark: exam);
+    Mark(studentId: sid, subjectId: subid, classId: cid, tests: [test], examPapers: [exam]);
 
 List<Mark> get initialMarks => [
       // ── t1: Form 3A — Mathematics ──────────────────────────────────────────

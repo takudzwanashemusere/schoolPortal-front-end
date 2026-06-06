@@ -451,7 +451,7 @@ class _MarksTable extends StatelessWidget {
                 Expanded(
                     flex: 3,
                     child: _TH('SUBJECT')),
-                Expanded(child: _TH('TEST\n(40%)')),
+                Expanded(child: _TH('TERM\n(40%)')),
                 Expanded(child: _TH('EXAM\n(60%)')),
                 Expanded(child: _TH('FINAL')),
                 SizedBox(width: 60, child: _TH('GRADE')),
@@ -492,13 +492,13 @@ class _MarksTable extends StatelessWidget {
                   ),
                   Expanded(
                     child: Text(
-                      e.mark.testMark.toStringAsFixed(0),
+                      e.mark.termMark.toStringAsFixed(1),
                       style: const TextStyle(fontSize: 13),
                     ),
                   ),
                   Expanded(
                     child: Text(
-                      e.mark.examMark.toStringAsFixed(0),
+                      e.mark.examMark.toStringAsFixed(1),
                       style: const TextStyle(fontSize: 13),
                     ),
                   ),

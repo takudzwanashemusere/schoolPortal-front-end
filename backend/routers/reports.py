@@ -7,7 +7,7 @@ from schemas import (
     HeadmasterReportResponse, HeadmasterReportUpdateRequest,
     ClassReportResponse, ClassGroupResponse, SubjectResponse,
     StudentResponse, StudentReportRow, StudentMarkEntry,
-    calc_final_mark, calc_grade,
+    mark_to_response,
 )
 
 router = APIRouter()
@@ -80,20 +80,20 @@ async def get_class_report(
         for subject in subjects_docs:
             mark = mark_index.get((student["_id"], subject["_id"]))
             if mark:
-                final = calc_final_mark(mark["test_mark"], mark["exam_mark"])
-                grade = calc_grade(final)
-                is_passing = final >= 50
+                mr = mark_to_response(mark)
                 entry = StudentMarkEntry(
                     subject_id=subject["_id"],
                     subject_name=subject["name"],
-                    test_mark=mark["test_mark"],
-                    exam_mark=mark["exam_mark"],
-                    final_mark=final,
-                    grade=grade,
-                    is_passing=is_passing,
+                    tests=mr.tests,
+                    exam_papers=mr.exam_papers,
+                    term_mark=mr.term_mark,
+                    exam_mark=mr.exam_mark,
+                    final_mark=mr.final_mark,
+                    grade=mr.grade,
+                    is_passing=mr.is_passing,
                 )
-                student_finals.append(final)
-                if is_passing:
+                student_finals.append(mr.final_mark)
+                if mr.is_passing:
                     passing_count += 1
                 total_mark_count += 1
             else:

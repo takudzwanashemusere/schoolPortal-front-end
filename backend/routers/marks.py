@@ -45,7 +45,7 @@ async def upsert_mark(
         "subject_id": body.subject_id,
         "class_id":   body.class_id,
     }
-    update = {"$set": {"test_mark": body.test_mark, "exam_mark": body.exam_mark}}
+    update = {"$set": {"tests": body.tests, "exam_papers": body.exam_papers}}
     await db["marks"].update_one(filt, update, upsert=True)
 
     doc = await db["marks"].find_one(filt)
